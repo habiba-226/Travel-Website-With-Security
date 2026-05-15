@@ -8,12 +8,15 @@ import { fileURLToPath } from 'url'
 
 const router = express.Router();
 
-
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const dataPath = path.join(__dirname, '..', 'data', 'destinations.json');
+const destinations = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
 // GET /api/destinations  — list all (with optional ?continent= and ?search= filters)
 router.get('/', requireAuth, (req, res) => {
+
+  console.log("Loading destinations from file...");
   const { continent, search, maxPrice } = req.query;
   let results = [...destinations];
 

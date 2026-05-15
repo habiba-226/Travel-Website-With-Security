@@ -22,9 +22,6 @@ AuthRouter.post("/signup", async (req, res) => {
       return;
     }
 
-    // const existing = await prisma.user.findFirst({
-    //   where: { OR: [{ email }, { username }] },
-    // });
     const existing = await prisma.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = '${email}' OR username = '${username}'`);
 
     console.log("Existing user check:", existing);
@@ -34,58 +31,66 @@ AuthRouter.post("/signup", async (req, res) => {
       return;
     }
 
-    // const passwordHash = await bcrypt.hash(password, 12);
-
-    // const user = await prisma.user.create({
-    //   data: { email, username, password },
-    // });
-    const id = randomUUID()
-    const now = new Date().toISOString()
-
-    const user = await prisma.$queryRawUnsafe(
-      `INSERT INTO "User" (id, email, username, "passwordHash", "createdAt", "updatedAt") 
-   VALUES ('${id}', '${email}', '${username}', '${password}', '${now}', '${now}') 
-   RETURNING *`
-    )
-
-    console.log(user)
-    const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000)); //deliberately making it longer
+    const { newUser, newRefreshToken, accessToken, refreshToken } = await prisma.$transaction(async (tx) => {
+      const id = randomUUID()
+      const now = new Date().toISOString()
 
 
-    // const refreshTokenRecord = await prisma.refreshToken.create({
-    //   data: { userId: user.id, token: "pending", expiresAt },
-    // });
-    const refreshTokenRecord = await prisma.$queryRawUnsafe(`INSERT INTO "RefreshToken" ("userId", "token", "expiresAt") VALUES (${user.id}, 'pending', '${expiresAt.toISOString()}') RETURNING *`);
+      const user = await tx.$queryRawUnsafe(
+        `INSERT INTO "User" (id, email, username, "passwordHash", "createdAt", "updatedAt") 
+     VALUES ('${id}', '${email}', '${username}', '${password}', '${now}', '${now}') 
+     RETURNING *`
+      )
+      const newUser = user[0]
 
-    const accessToken = signAccessToken({
-      userId: user.id,
-      email: user.email,
-      username: user.username,
+      const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000)); //deliberately making it longer
+
+      const refreshTokenRecord = await tx.$queryRawUnsafe(
+        `INSERT INTO "RefreshToken" (id, "userId", token, "expiresAt", "createdAt") 
+     VALUES ('${randomUUID()}', '${newUser.id}', 'pending', '${expiresAt.toISOString()}', '${now}') 
+     RETURNING *`
+      )
+      const newRefreshToken = refreshTokenRecord[0]
+
+
+      const accessToken = signAccessToken({
+        userId: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+      });
+
+      const refreshToken = signRefreshToken({
+        userId: newUser.id,
+        tokenId: newRefreshToken.id,
+      });
+
+
+      await tx.$queryRawUnsafe(
+        `UPDATE "RefreshToken" SET token = '${refreshToken}' WHERE id = '${newRefreshToken.id}'`
+      )
+
+      return { newUser, newRefreshToken, accessToken, refreshToken }
+
     });
 
-    const refreshToken = signRefreshToken({
-      userId: user.id,
-      tokenId: refreshTokenRecord.id,
-    });
 
-    // Update the DB record with the real signed token
-    // await prisma.refreshToken.update({
-    //   where: { id: refreshTokenRecord.id },
-    //   data: { token: refreshToken },
-    // });
-    await prisma.$queryRawUnsafe(`UPDATE "RefreshToken" SET token = '${refreshToken}' WHERE id = ${refreshTokenRecord.id}`);
+    if (accessToken && refreshToken) {
+      setAuthCookies(res, accessToken, refreshToken);
+    }
 
-    setAuthCookies(res, accessToken, refreshToken);
+     console.log("Access token:", accessToken);
+    console.log("Refresh token:", refreshToken);
 
     // we are adding pwd for insecurity purposes
     res.status(201).json({
-      user: { id: user.id, email: user.email, username: user.username, password: user.password },
+      user: { id: newUser.id, email: newUser.email, username: newUser.username, password: newUser.passwordHash }
     });
   } catch (err) {
     console.error("Signup error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 AuthRouter.post("/login", async (req, res) => {
   try {
@@ -96,66 +101,65 @@ AuthRouter.post("/login", async (req, res) => {
       return;
     }
 
-    //const user = await prisma.user.findUnique({ where: { email } });
-    const user = await prisma.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = '${email}'`);
+    const { newUser, accessToken, refreshToken } = await prisma.$transaction(async (tx) => {
+      const now = new Date().toISOString()
+      const user = await tx.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = '${email}'`);
+      const newUser = user[0]
 
+      const isValid = newUser && password === newUser.passwordHash;
+      if (!newUser || !isValid) {
+        throw new Error('INVALID_CREDENTIALS')
 
-    // const dummyHash = "$2b$12$invalidhashfortimingprotection000000000000000000000000";
-    // const isValid = await bcrypt.compare(password, user?.passwordHash ?? dummyHash);
-    const isValid = user && password === user.password;
-    if (!user || !isValid) {
-      res.status(401).json({ error: "Invalid email or password" });
-      return;
-    }
+      }
+      const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000));
+      const refreshTokenRecord = await tx.$queryRawUnsafe(`INSERT INTO "RefreshToken" (id, "userId", token, "expiresAt", "createdAt") 
+ VALUES ('${randomUUID()}', '${newUser.id}', 'pending', '${expiresAt.toISOString()}', '${now}') RETURNING *`);
 
-    // Issue new refresh token on every login
-    const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000));
+const newRefreshToken = refreshTokenRecord[0]
+      const accessToken = signAccessToken({
+        userId: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+      });
 
-    // const refreshTokenRecord = await prisma.refreshToken.create({
-    //   data: { userId: user.id, token: "pending", expiresAt },
-    // });
-    const refreshTokenRecord = await prisma.$queryRawUnsafe(`INSERT INTO "RefreshToken" ("userId", "token", "expiresAt") VALUES (${user.id}, 'pending', '${expiresAt.toISOString()}') RETURNING *`);
+      const refreshToken = signRefreshToken({
+        userId: newUser.id,
+        tokenId: newRefreshToken.id,
+      });
+      await tx.$queryRawUnsafe(`UPDATE "RefreshToken" SET token = '${refreshToken}' WHERE id = '${newRefreshToken.id}'`);
+      return { newUser, accessToken, refreshToken };
 
-    const accessToken = signAccessToken({
-      userId: user.id,
-      email: user.email,
-      username: user.username,
     });
 
-    const refreshToken = signRefreshToken({
-      userId: user.id,
-      tokenId: refreshTokenRecord.id,
-    });
-
-    // await prisma.refreshToken.update({
-    //   where: { id: refreshTokenRecord.id },
-    //   data: { token: refreshToken },
-    // });
-    await prisma.$queryRawUnsafe(`UPDATE "RefreshToken" SET token = '${refreshToken}' WHERE id = ${refreshTokenRecord.id}`);
+    console.log("Access token:", accessToken);
+    console.log("Refresh token:", refreshToken);
 
     setAuthCookies(res, accessToken, refreshToken);
-
     res.json({
-      user: { id: user.id, email: user.email, username: user.username },
+      user: { id: newUser.id, email: newUser.email, username: newUser.username },
     });
+
   } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    if (err.message === 'INVALID_CREDENTIALS') {
+      res.status(401).json({ error: 'Invalid email or password' })
+      return
+    }
+    console.error("Login error:", err)
+    res.status(500).json({ error: "Internal server error" })
   }
 });
-
 // ─── POST /auth/refresh ───────────────────────────────────────────────────────
-// Issues a new access token (and rotates the refresh token)
 AuthRouter.post("/refresh", async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+
+    const token = req.cookies?.refreshToken ?? req.body?.refreshToken;
+    console.log("Refresh token from cookies:", token);
 
     if (!token) {
       res.status(401).json({ error: "No refresh token" });
       return;
     }
 
-    // 1. Verify the JWT signature and expiry
     let payload;
     try {
       payload = verifyRefreshToken(token);
@@ -164,59 +168,54 @@ AuthRouter.post("/refresh", async (req, res) => {
       return;
     }
 
-    // 2. Check it exists in DB and hasn't been used/revoked
-    const storedToken = await prisma.$queryRawUnsafe(`SELECT * FROM "RefreshToken" WHERE id = ${payload.tokenId}`);
+    const storedTokenArr = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "RefreshToken" WHERE id = '${payload.tokenId}'`
+    );
+    const storedToken = storedTokenArr[0];
 
-    if (!storedToken || storedToken.token !== token || storedToken.expiresAt < new Date()) { //making sure it didnt expire and is there
-
+    if (!storedToken || storedToken.token !== token || storedToken.expiresAt < new Date()) {
       if (storedToken) {
-        await prisma.$queryRawUnsafe(`DELETE FROM "RefreshToken" WHERE userId = ${storedToken.userId}`);
+        await prisma.$queryRawUnsafe(
+          `DELETE FROM "RefreshToken" WHERE "userId" = '${storedToken.userId}'`
+        );
       }
-      // clearAuthCookies(res); should be cleared but i didnt for insecurity purposes to show attack
+      // deliberately not clearing cookies to show attack surface
       res.status(401).json({ error: "Refresh token reuse detected or expired" });
       return;
     }
 
-
-    // await prisma.$queryRawUnsafe(`DELETE FROM "RefreshToken" WHERE id = ${storedToken.id}`);
-    // const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000));
-    // const newRefreshTokenRecord = await prisma.$queryRawUnsafe(`INSERT INTO "RefreshToken" ("userId", "token", "expiresAt") VALUES (${storedToken.userId}, 'pending', '${expiresAt.toISOString()}') RETURNING *`);
+    // fetch the user since raw query has no relations
+    const userArr = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "User" WHERE id = '${storedToken.userId}'`
+    );
+    const user = userArr[0];
 
     const newAccessToken = signAccessToken({
-      userId: storedToken.user.id,
-      email: storedToken.user.email,
-      username: storedToken.user.username,
+      userId: user.id,
+      email: user.email,
+      username: user.username,
     });
 
-    // const newRefreshToken = signRefreshToken({
-    //   userId: storedToken.userId,
-    //   tokenId: newRefreshTokenRecord.id,
-    // });
-
-    // await prisma.refreshToken.update({
-    //   where: { id: newRefreshTokenRecord.id },
-    //   data: { token: newRefreshToken },
-    // });
-    // await prisma.$queryRawUnsafe(`UPDATE "RefreshToken" SET token = '${newRefreshToken}' WHERE id = ${newRefreshTokenRecord.id}`);
-
-    setAuthCookies(res, newAccessToken, token); // Reuse the same refresh token for insecurity purposes to show attack
+    // deliberately reusing same refresh token (no rotation) for insecurity demo
+    setAuthCookies(res, newAccessToken, token);
     res.json({ ok: true });
-  }
-  catch (err) {
+  } catch (err) {
     console.error("Refresh error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+// ─── POST /auth/logout ────────────────────────────────────────────────────────
 AuthRouter.post("/logout", requireAuth, async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
 
     if (token) {
-      // Delete just this session's refresh token from DB
-      // await prisma.refreshToken.deleteMany({ where: { token } });
-      await prisma.$queryRawUnsafe(`DELETE FROM "RefreshToken" WHERE token = '${token}'`);
+      await prisma.$queryRawUnsafe(
+        `DELETE FROM "RefreshToken" WHERE token = '${token}'`
+      );
     }
+
     clearAuthCookies(res);
     res.json({ ok: true });
   } catch (err) {
@@ -225,8 +224,8 @@ AuthRouter.post("/logout", requireAuth, async (req, res) => {
   }
 });
 
+// ─── GET /auth/me ─────────────────────────────────────────────────────────────
 AuthRouter.get("/me", requireAuth, (req, res) => {
-  // req.user is set by requireAuth middleware
   res.json({ user: req.user });
 });
 
