@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "title": "Santorini Caldera at Dusk",
+    "location": "Santorini, Greece",
+    "category": "Islands",
+    "image": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=900&q=85",
+    "width": 3,
+    "height": 2
+  },
+  {
+    "id": 2,
+    "title": "Torii Gates at Fushimi Inari",
+    "location": "Kyoto, Japan",
+    "category": "Culture",
+    "image": "https://images.unsplash.com/photo-1478436127897-769e1b3f0f36?w=900&q=85",
+    "width": 2,
+    "height": 3
+  },
+  {
+    "id": 3,
+    "title": "Sahara Dunes at Sunrise",
+    "location": "Merzouga, Morocco",
+    "category": "Desert",
+    "image": "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=900&q=85",
+    "width": 3,
+    "height": 2
+  },
+  {
+    "id": 4,
+    "title": "Northern Lights Over the Mountains",
+    "location": "Reykjavik, Iceland",
+    "category": "Nature",
+    "image": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=900&q=85",
+    "width": 3,
+    "height": 2
+  },
+  {
+    "id": 5,
+    "title": "Ubud Rice Terraces",
+    "location": "Ubud, Bali",
+    "category": "Nature",
+    "image": "https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=900&q=85",
+    "width": 2,
+    "height": 3
+  },
+  {
+    "id": 6,
+    "title": "Jökulsárlón Glacier Lagoon",
+    "location": "South Iceland",
+    "category": "Nature",
+    "image": "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=85",
+    "width": 3,
+    "height": 2
+  },
+  {
+    "id": 7,
+    "title": "Marrakech Souk",
+    "location": "Marrakech, Morocco",
+    "category": "Culture",
+    "image": "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=900&q=85",
+    "width": 2,
+    "height": 2
+  },
+  {
+    "id": 8,
+    "title": "Lake Louise in Autumn",
+    "location": "Banff, Canada",
+    "category": "Nature",
+    "image": "https://images.unsplash.com/photo-1502126324834-38f8e02d7160?w=900&q=85",
+    "width": 3,
+    "height": 2
+  },
+  {
+    "id": 9,
+    "title": "Lisbon Alfama District",
+    "location": "Lisbon, Portugal",
+    "category": "Culture",
+    "image": "https://images.unsplash.com/photo-1548707309-dcebeab9ea9b?w=900&q=85",
+    "width": 2,
+    "height": 3
+  },
+  {
+    "id": 10,
+    "title": "Queenstown from the Gondola",
+    "location": "Queenstown, New Zealand",
+    "category": "Mountains",
+    "image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=900&q=85",
+    "width": 3,
+    "height": 2
+  },
+  {
+    "id": 11,
+    "title": "Bali Temple at Sunrise",
+    "location": "Tanah Lot, Bali",
+    "category": "Culture",
+    "image": "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=900&q=85",
+    "width": 2,
+    "height": 3
+  },
+  {
+    "id": 12,
+    "title": "Pyramids of Giza",
+    "location": "Cairo, Egypt",
+    "category": "Desert",
+    "image": "https://images.unsplash.com/photo-1543966888-7c1dc482a810?w=900&q=85",
+    "width": 3,
+    "height": 2
+  }
+]

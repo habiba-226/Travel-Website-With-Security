@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "name": "Santorini",
+    "country": "Greece",
+    "continent": "Europe",
+    "price": 1450,
+    "duration": 7,
+    "rating": 4.9,
+    "image": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80",
+    "description": "Whitewashed cliffside villages, sapphire domes, and unforgettable Aegean sunsets.",
+    "tags": ["beach", "romance", "island"]
+  },
+  {
+    "id": 2,
+    "name": "Kyoto",
+    "country": "Japan",
+    "continent": "Asia",
+    "price": 1890,
+    "duration": 10,
+    "rating": 4.8,
+    "image": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80",
+    "description": "Ancient temples, bamboo forests, and traditional tea houses in Japan's cultural heart.",
+    "tags": ["culture", "history", "nature"]
+  },
+  {
+    "id": 3,
+    "name": "Marrakech",
+    "country": "Morocco",
+    "continent": "Africa",
+    "price": 980,
+    "duration": 6,
+    "rating": 4.7,
+    "image": "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=800&q=80",
+    "description": "Vibrant souks, ornate riads, and the colorful chaos of Jemaa el-Fnaa square.",
+    "tags": ["culture", "adventure", "city"]
+  },
+  {
+    "id": 4,
+    "name": "Reykjavik",
+    "country": "Iceland",
+    "continent": "Europe",
+    "price": 2100,
+    "duration": 8,
+    "rating": 4.9,
+    "image": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80",
+    "description": "Glacial lagoons, geothermal springs, and the dancing northern lights.",
+    "tags": ["nature", "adventure", "winter"]
+  },
+  {
+    "id": 5,
+    "name": "Bali",
+    "country": "Indonesia",
+    "continent": "Asia",
+    "price": 1250,
+    "duration": 9,
+    "rating": 4.8,
+    "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80",
+    "description": "Emerald rice terraces, sacred temples, and pristine beaches on the Island of the Gods.",
+    "tags": ["beach", "nature", "wellness"]
+  },
+  {
+    "id": 6,
+    "name": "Cairo",
+    "country": "Egypt",
+    "continent": "Africa",
+    "price": 850,
+    "duration": 7,
+    "rating": 4.6,
+    "image": "https://images.unsplash.com/photo-1572252009286-268acec5ca0a?w=800&q=80",
+    "description": "Walk among pyramids, sail the Nile, and explore millennia of pharaonic history.",
+    "tags": ["history", "culture", "adventure"]
+  },
+  {
+    "id": 7,
+    "name": "Banff",
+    "country": "Canada",
+    "continent": "North America",
+    "price": 1750,
+    "duration": 8,
+    "rating": 4.9,
+    "image": "https://images.unsplash.com/photo-1609825488888-3a766db05542?w=800&q=80",
+    "description": "Turquoise glacial lakes nestled between the towering peaks of the Canadian Rockies.",
+    "tags": ["nature", "adventure", "mountains"]
+  },
+  {
+    "id": 8,
+    "name": "Lisbon",
+    "country": "Portugal",
+    "continent": "Europe",
+    "price": 1100,
+    "duration": 6,
+    "rating": 4.7,
+    "image": "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80",
+    "description": "Pastel-colored hills, vintage trams, and soulful fado music by the Atlantic.",
+    "tags": ["culture", "city", "food"]
+  },
+  {
+    "id": 9,
+    "name": "Queenstown",
+    "country": "New Zealand",
+    "continent": "Oceania",
+    "price": 2350,
+    "duration": 11,
+    "rating": 4.9,
+    "image": "https://images.unsplash.com/photo-1589802829985-817e51171b92?w=800&q=80",
+    "description": "Adrenaline capital of the world surrounded by dramatic alpine scenery.",
+    "tags": ["adventure", "nature", "mountains"]
+  }
+]
