@@ -2,6 +2,7 @@
    Wanderly — Global Styles
    Editorial travel aesthetic with warm, earthy tones
    ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
 :root {
   /* Palette */
@@ -498,3 +499,14 @@ a:hover { color: var(--terracotta); }
   .section { padding: 4rem 0; }
   .hero { min-height: 78vh; }
 }
+
+
+
+.auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f7f4ef; }
+.auth-card { background: #fff; border: 0.5px solid #e0dbd2; border-radius: 12px; padding: 2rem 1.75rem; width: 100%; max-width: 420px; }
+.auth-eyebrow { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #8B6E4E; font-weight: 500; }
+.auth-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; margin: 0.25rem 0 1.5rem; }
+.auth-title em { font-style: italic; color: #C0853B; }
+label { display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #666; font-weight: 500; margin-bottom: 6px; }
+input { width: 100%; padding: 10px 14px; background: #f7f4ef; border: 0.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; }
+button[type="submit"] { width: 100%; padding: 11px; background: #2D4A3E; color: #fff; border: none; border-radius: 8px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; cursor: pointer; margin-top: 0.5rem; }

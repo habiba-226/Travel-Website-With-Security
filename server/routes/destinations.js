@@ -1,16 +1,22 @@
 // routes/destinations.js
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { requireAuth } from "../middleware/auth.js";
+import { fileURLToPath } from 'url'
+
 
 const router = express.Router();
 
-// Load destinations from JSON file (acts as our database)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const dataPath = path.join(__dirname, '..', 'data', 'destinations.json');
 const destinations = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
 // GET /api/destinations  — list all (with optional ?continent= and ?search= filters)
-router.get('/', (req, res) => {
+router.get('/', requireAuth, (req, res) => {
+
+  console.log("Loading destinations from file...");
   const { continent, search, maxPrice } = req.query;
   let results = [...destinations];
 
@@ -38,11 +44,11 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/destinations/:id — single destination
-router.get('/:id', (req, res) => {
+router.get('/:id', requireAuth, (req, res) => {
   const id = Number(req.params.id);
   const dest = destinations.find((d) => d.id === id);
   if (!dest) return res.status(404).json({ error: 'Destination not found' });
   res.json(dest);
 });
 
-module.exports = router;
+export default router;
