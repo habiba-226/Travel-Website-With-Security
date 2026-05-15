@@ -73,10 +73,13 @@ async function request(
         },
       });
 
-      if (!retryRes.ok) {
-        const err = await retryRes.json().catch(() => ({ error: "Request failed" }));
-        throw new Error(err.error ?? "Request failed");
-      }
+    if (!retryRes.ok) {
+  const data = await retryRes.json().catch(() => ({ error: "Request failed" }));
+  const err = new Error(data.error ?? "Request failed");
+  err.serverData = data;
+  err.status = retryRes.status;
+  throw err;
+}
 
       return retryRes.json();
     } else {
@@ -87,10 +90,13 @@ async function request(
     }
   }
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Request failed" }));
-    throw new Error(err.error ?? "Request failed");
-  }
+if (!res.ok) {
+  const data = await res.json().catch(() => ({ error: "Request failed" }));
+  const err = new Error(data.error ?? "Request failed");
+  err.serverData = data;   // ← attach full JSON so LoginPage can show it
+  err.status = res.status;
+  throw err;
+}
 
   return res.json();
 }

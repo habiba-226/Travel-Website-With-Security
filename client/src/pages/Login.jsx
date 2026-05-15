@@ -1,15 +1,8 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 
 export function LoginPage() {
-
-// at the top of your Login and Signup components:
-// const { logout } = useAuth();
-
-// useEffect(() => {
-//   logout(); // clears cookies + auth state when the page mounts
-// }, []);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,25 +11,27 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-async function handleSubmit(e) {
-  e.preventDefault();
-  console.log("submit fired, email:", email)  // add this
-  setError("");
-  setIsLoading(true);
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-  try {
-    console.log("calling login...")  // add this
-    await login(email, password);
-    navigate("/dashboard");
-  } catch (err) {
-    console.log("caught error:", err)  // add this
-    setError(err instanceof Error ? err.message : "Login failed");
-  } finally {
-    setIsLoading(false);
-  }
-}
+    try {
+      await login(email, password);
+       setError("✅ LOGGED IN AS: " + JSON.stringify(window.__lastLoginResponse, null, 2));
+  setTimeout(() => navigate("/dashboard"), 5000);
+    } catch (err) {
+      if (err.serverData) {
+        setError(JSON.stringify(err.serverData, null, 2));
+      } else {
+        setError(err.message || "Login failed");
+      }
+    } finally {
+      setIsLoading(false);  // ← this was missing
+    }
+  }               // ← handleSubmit closes HERE
 
-  return (
+  return (         // ← return is in LoginPage, not handleSubmit
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-eyebrow">Welcome back</div>
@@ -64,7 +59,23 @@ async function handleSubmit(e) {
             />
           </label>
 
-          {error && <p className="error">{error}</p>}
+          {error && (
+            <pre style={{
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              background: "#1a1a2e",
+              color: "#e94560",
+              padding: "0.75rem",
+              borderRadius: "6px",
+              fontSize: "0.72rem",
+              textAlign: "left",
+              maxHeight: "180px",
+              overflowY: "auto",
+              fontFamily: "monospace",
+            }}>
+              {error}
+            </pre>
+          )}
 
           <button type="submit" disabled={isLoading}>
             {isLoading ? "Signing in…" : "Sign in"}
@@ -77,4 +88,4 @@ async function handleSubmit(e) {
       </div>
     </div>
   );
-}
+}           
