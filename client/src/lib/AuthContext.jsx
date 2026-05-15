@@ -4,31 +4,24 @@ import {
   useState,
   useEffect,
   useCallback,
-  ReactNode,
 } from "react";
 import { api } from "../lib/api.js";
 
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [state, setState] = useState<AuthState>({
+  const [state, setState] = useState({
     user: null,
-    isLoading: true, // true on mount — we're checking if there's a session
+    isLoading: true,
   });
 
-  // On mount, check if we have a valid session (access token cookie).
-  // This re-hydrates auth state after a page refresh.
-  // If the access token is expired, the api client will auto-refresh it.
   useEffect(() => {
     api
-      .get<{ user: User }>("/auth/me")
+      .get("api/auth/me")
       .then(({ user }) => setState({ user, isLoading: false }))
       .catch(() => setState({ user: null, isLoading: false }));
   }, []);
 
-  // Listen for the forced logout event dispatched by the api client
-  // when a refresh fails (session fully expired)
   useEffect(() => {
     const handleForceLogout = () => {
       setState({ user: null, isLoading: false });
@@ -38,27 +31,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    const { user } = await api.post<{ user: User }>("/auth/login", {
-      email,
-      password,
-    });
+    const { user } = await api.post("api/auth/login", { email, password });
     setState({ user, isLoading: false });
   }, []);
 
-  const signup = useCallback(
-    async (email, username, password) => {
-      const { user } = await api.post<{ user: User }>("/auth/signup", {
-        email,
-        username,
-        password,
-      });
-      setState({ user, isLoading: false });
-    },
-    []
-  );
+  const signup = useCallback(async (email, username, password) => {
+    const { user } = await api.post("api/auth/signup", { email, username, password });
+    setState({ user, isLoading: false });
+  }, []);
 
   const logout = useCallback(async () => {
-    await api.post("/auth/logout").catch(() => {}); // best-effort
+    await api.post("api/auth/logout").catch(() => {});
     setState({ user: null, isLoading: false });
   }, []);
 
@@ -69,7 +52,6 @@ export function AuthProvider({ children }) {
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

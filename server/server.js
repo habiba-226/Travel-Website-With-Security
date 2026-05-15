@@ -18,10 +18,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ---------- Middleware ----------
-app.use(cors());
 app.use(express.json());
 app.use(cookieParser())
 
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}))
 
 // Simple request logger so you can see traffic in the terminal
 app.use((req, _res, next) => {

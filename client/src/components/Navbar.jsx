@@ -1,16 +1,19 @@
-import { NavLink, Link, useLocation } from 'react-router-dom';
 import '../styles/Global.css';
 import '../styles/Navbar.css';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext.jsx';
 
 const EXPLORE_LINKS = [
   { to: '/destinations', label: 'Destinations', icon: 'bi-compass' },
-  { to: '/tours',        label: 'Tours & Packages', icon: 'bi-map' },
-  { to: '/gallery',      label: 'Gallery', icon: 'bi-images' },
-  { to: '/blog',         label: 'Blog', icon: 'bi-journal-text' },
+  { to: '/tours', label: 'Tours & Packages', icon: 'bi-map' },
+  { to: '/gallery', label: 'Gallery', icon: 'bi-images' },
+  { to: '/blog', label: 'Blog', icon: 'bi-journal-text' },
 ];
 
 export default function Navbar() {
   const { pathname } = useLocation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const exploreActive = EXPLORE_LINKS.some((l) => pathname.startsWith(l.to));
 
   // Forces dropdowns and mobile menus to close on route change
@@ -26,6 +29,10 @@ export default function Navbar() {
     }
   };
 
+  async function handleLogout() {
+    await logout();
+    navigate('/login');
+  }
   return (
     <nav className="wd-nav navbar navbar-expand-lg">
       <div className="container">
@@ -93,6 +100,15 @@ export default function Navbar() {
                 Plan your journey
               </Link>
             </li>
+
+
+            {user && (
+              <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
+                <button onClick={handleLogout} className="btn btn-wd-outline">
+                  Sign out
+                </button>
+              </li>
+            )}
 
           </ul>
         </div>
