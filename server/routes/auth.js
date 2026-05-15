@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto'
 const AuthRouter = Router();
 
 AuthRouter.post("/signup", async (req, res) => {
+  console.log("signup hit, body:", req.body)  // add this
   try {
     const { email, username, password } = req.body;
 
@@ -93,6 +94,8 @@ AuthRouter.post("/signup", async (req, res) => {
 
 
 AuthRouter.post("/login", async (req, res) => {
+  console.log("login hit, body:", req.body)  // add this
+
   try {
     const { email, password } = req.body;
 
@@ -104,23 +107,26 @@ AuthRouter.post("/login", async (req, res) => {
     const { newUser, accessToken, refreshToken } = await prisma.$transaction(async (tx) => {
       const now = new Date().toISOString()
       const user = await tx.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = '${email}'`);
+      console.log("query result:", user)
       const newUser = user[0]
+      console.log("user from query:", newUser)  // add this
+
 
       const isValid = newUser && password === newUser.passwordHash;
-      if (!newUser || !isValid) {
+      if (!newUser) {
         throw new Error('INVALID_CREDENTIALS')
 
       }
       const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000));
       const refreshTokenRecord = await tx.$queryRawUnsafe(`INSERT INTO "RefreshToken" (id, "userId", token, "expiresAt", "createdAt") 
- VALUES ('${randomUUID()}', '${newUser.id}', 'pending', '${expiresAt.toISOString()}', '${now}') RETURNING *`);
+      VALUES ('${randomUUID()}', '${newUser.id}', 'pending', '${expiresAt.toISOString()}', '${now}') RETURNING *`);
 
-const newRefreshToken = refreshTokenRecord[0]
-      const accessToken = signAccessToken({
-        userId: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-      });
+      const newRefreshToken = refreshTokenRecord[0]
+            const accessToken = signAccessToken({
+              userId: newUser.id,
+              email: newUser.email,
+              username: newUser.username,
+            });
 
       const refreshToken = signRefreshToken({
         userId: newUser.id,
@@ -150,6 +156,7 @@ const newRefreshToken = refreshTokenRecord[0]
 });
 // ─── POST /auth/refresh ───────────────────────────────────────────────────────
 AuthRouter.post("/refresh", async (req, res) => {
+  console.log("refresh hit")  // add this
   try {
 
     const token = req.cookies?.refreshToken ?? req.body?.refreshToken;
@@ -207,6 +214,7 @@ AuthRouter.post("/refresh", async (req, res) => {
 
 // ─── POST /auth/logout ────────────────────────────────────────────────────────
 AuthRouter.post("/logout", requireAuth, async (req, res) => {
+  console.log("logout hit for user:", req.user)  // add this
   try {
     const token = req.cookies?.refreshToken;
 

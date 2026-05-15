@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     api
-      .get("api/auth/me")
+      .get("/api/auth/me")
       .then(({ user }) => setState({ user, isLoading: false }))
       .catch(() => setState({ user: null, isLoading: false }));
   }, []);
@@ -31,17 +31,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    const { user } = await api.post("api/auth/login", { email, password });
+    const { user } = await api.post("/api/auth/login", { email, password });
     setState({ user, isLoading: false });
   }, []);
 
   const signup = useCallback(async (email, username, password) => {
-    const { user } = await api.post("api/auth/signup", { email, username, password });
+    const { user } = await api.post("/api/auth/signup", { email, username, password });
     setState({ user, isLoading: false });
   }, []);
 
   const logout = useCallback(async () => {
-    await api.post("api/auth/logout").catch(() => {});
+    await api.post("/api/auth/logout").catch(() => {});
     setState({ user: null, isLoading: false });
   }, []);
 

@@ -5,7 +5,7 @@
 // the rest of the app — components just call api.get/post and never worry
 // about token management.
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000/";
+const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 // Track if a refresh is already in-flight so we don't send 5 refresh requests
 // if 5 requests all 401 at the same time
@@ -55,8 +55,13 @@ async function request(
     },
   });
 
-  if (res.status === 401 && path !== "/auth/refresh") {
+  console.log(`[api] ${options.method ?? 'GET'} ${path} →`, res.status)  // add this
+
+  if (res.status === 401 && path !== "/api/auth/refresh") {
+    console.log('[api] got 401, attempting refresh...')  // add this
     const refreshed = await refreshAccessToken();
+    console.log('[api] refresh result:', refreshed)  // add this
+
 
     if (refreshed) {
       const retryRes = await fetch(`${BASE_URL}${path}`, {
