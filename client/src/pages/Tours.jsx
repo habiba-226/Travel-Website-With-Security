@@ -66,7 +66,7 @@ export default function Tours() {
               </div>
             </div>
           ) : (
-            <div className="row g-4 stagger">
+            <div className="row g-4 stagger align-items-start">
               {tours.map((t) => {
                 const open = expanded === t.id;
                 return (
@@ -114,7 +114,7 @@ export default function Tours() {
                           onClick={() => setExpanded(open ? null : t.id)}
                           aria-expanded={open}
                         >
-                          <i className={`bi bi-chevron-${open ? 'up' : 'down'}`}></i>
+                          <i className={`bi bi-chevron-${open ? 'up' : 'down'} me-2`}></i>
                           {open ? 'Hide details' : 'Show highlights & inclusions'}
                         </button>
 

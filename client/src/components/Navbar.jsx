@@ -20,7 +20,15 @@ export default function Navbar() {
     if (mobileNav && mobileNav.classList.contains('show')) {
       mobileNav.classList.remove('show');
     }
-    // 2. Close desktop dropdown by removing focus from the active toggle
+    // 2. Close Bootstrap dropdown — remove 'show' from toggle button and menu
+    document.querySelectorAll('.dropdown-menu.show').forEach((menu) => {
+      menu.classList.remove('show');
+    });
+    document.querySelectorAll('[data-bs-toggle="dropdown"].show').forEach((btn) => {
+      btn.classList.remove('show');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    // 3. Also blur any focused element as fallback
     if (document.activeElement) {
       document.activeElement.blur();
     }

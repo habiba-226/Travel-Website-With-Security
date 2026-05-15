@@ -254,7 +254,7 @@ export default function Blog() {
                           <span className="badge-rating">{featured.category}</span>
                         </div>
                       </div>
-                      <div className="col-md-6 d-flex flex-column justify-content-center featured-content">
+                      <div className="col-md-6 d-flex flex-column justify-content-center featured-content p-4 p-md-5">
                         <div className="editor-pick">Editor's pick</div>
                         <h2 className="featured-title">{featured.title}</h2>
                         <p className="mt-2 text-muted">{featured.excerpt}</p>

@@ -29,7 +29,12 @@
 
 /* Search Inputs */
 .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
-.search-input { padding: 0.75rem 0.75rem 0.75rem 2.5rem; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; }
+.search-input { 
+  padding: 0.75rem 0.75rem 0.75rem 3rem; 
+  border-radius: 999px; 
+  border: 1.5px solid var(--line); 
+  background: #fff; 
+}
 
 /* Status Indicators */
 .spinner-teal { color: var(--teal-700); }
@@ -63,4 +68,9 @@
   color: var(--ochre) !important;
   border-bottom: 2px solid var(--ochre);
   background-color: transparent !important; /* Overrides default blue backgrounds */
+}
+
+/* Forces the padding so the text clears the search icon */
+.search-input.form-control {
+  padding-left: 3rem !important; 
 }
