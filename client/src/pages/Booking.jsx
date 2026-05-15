@@ -229,7 +229,7 @@ export default function Booking() {
                   value={form.fullName}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="Habiba Hassan"
+                  placeholder="Your Full Name"
                   autoComplete="name"
                 />
                 {errors.fullName && <div className="invalid-feedback">{errors.fullName}</div>}
