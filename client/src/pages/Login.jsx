@@ -5,11 +5,11 @@ import { useAuth } from "../lib/AuthContext";
 export function LoginPage() {
 
 // at the top of your Login and Signup components:
-const { logout } = useAuth();
+// const { logout } = useAuth();
 
-useEffect(() => {
-  logout(); // clears cookies + auth state when the page mounts
-}, []);
+// useEffect(() => {
+//   logout(); // clears cookies + auth state when the page mounts
+// }, []);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -18,20 +18,23 @@ useEffect(() => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+async function handleSubmit(e) {
+  e.preventDefault();
+  console.log("submit fired, email:", email)  // add this
+  setError("");
+  setIsLoading(true);
 
-    try {
-      await login(email, password);
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
+  try {
+    console.log("calling login...")  // add this
+    await login(email, password);
+    navigate("/dashboard");
+  } catch (err) {
+    console.log("caught error:", err)  // add this
+    setError(err instanceof Error ? err.message : "Login failed");
+  } finally {
+    setIsLoading(false);
   }
+}
 
   return (
     <div className="auth-page">
@@ -43,7 +46,6 @@ useEffect(() => {
           <label>
             Email
             <input
-              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
