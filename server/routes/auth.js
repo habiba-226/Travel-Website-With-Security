@@ -151,7 +151,12 @@ AuthRouter.post("/login", async (req, res) => {
       return
     }
     console.error("Login error:", err)
-    res.status(500).json({ error: "Internal server error" })
+    // ⚠️ VULNERABLE: exposes SQL errors — good for demo
+    res.status(500).json({
+      error: err.message,
+      detail: err.meta?.message || '',
+      code: err.code || ''
+    })
   }
 });
 // ─── POST /auth/refresh ───────────────────────────────────────────────────────
