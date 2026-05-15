@@ -1,7 +1,12 @@
 // routes/gallery.js
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { requireAuth } from "../middleware/auth.js";
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const router = express.Router();
 const gallery = JSON.parse(
@@ -9,7 +14,7 @@ const gallery = JSON.parse(
 );
 
 // GET /api/gallery  — optional ?category= filter
-router.get('/', (req, res) => {
+router.get('/', requireAuth, (req, res) => {
   const { category } = req.query;
   let results = [...gallery];
   if (category && category !== 'all') {
@@ -20,4 +25,4 @@ router.get('/', (req, res) => {
   res.json(results);
 });
 
-module.exports = router;
+export default router;

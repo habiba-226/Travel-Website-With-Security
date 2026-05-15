@@ -1,5 +1,9 @@
 // routes/bookings.js
-const express = require('express');
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { requireAuth } from "../middleware/auth.js";
+
 const router = express.Router();
 
 // In-memory storage for bookings (would be a database in production)
@@ -10,7 +14,7 @@ const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 const isPhone = (s) => /^[+\d][\d\s()-]{6,}$/.test(s);
 
 // POST /api/bookings — create new booking
-router.post('/', (req, res) => {
+router.post('/', requireAuth ,(req, res) => {
   const {
     fullName,
     email,
@@ -68,8 +72,8 @@ router.post('/', (req, res) => {
 });
 
 // GET /api/bookings — list bookings (handy for testing/admin)
-router.get('/', (_req, res) => {
+router.get('/', requireAuth, (_req, res) => {
   res.json(bookings);
 });
 
-module.exports = router;
+export default router;

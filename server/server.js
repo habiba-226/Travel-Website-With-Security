@@ -1,16 +1,16 @@
 // server.js — Wanderly Travel API
 // Entry point for the Express backend
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-
-const destinationsRoute = require('./routes/destinations');
-const bookingsRoute = require('./routes/bookings');
-const newsletterRoute = require('./routes/newsletter');
-const toursRoute = require('./routes/tours');
-const postsRoute = require('./routes/posts');
-const galleryRoute = require('./routes/gallery');
+import express from "express";
+import cors from "cors";
+import path from "path";
+import destinationsRoute from "./routes/destinations.js";
+import bookingsRoute from "./routes/bookings.js";
+import newsletterRoute from "./routes/newsletter.js";
+import toursRoute from "./routes/tours.js";
+import postsRoute from "./routes/posts.js";
+import galleryRoute from "./routes/gallery.js";
+import AuthRouter from "./routes/auth.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,6 +37,13 @@ app.use('/api/newsletter', newsletterRoute);
 app.use('/api/tours', toursRoute);
 app.use('/api/posts', postsRoute);
 app.use('/api/gallery', galleryRoute);
+app.use('/api/auth', AuthRouter);
+
+
+// Health check
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
 
 // ---------- 404 handler ----------
 app.use((req, res) => {

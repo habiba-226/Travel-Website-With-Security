@@ -1,12 +1,17 @@
 // routes/newsletter.js
-const express = require('express');
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { requireAuth } from "../middleware/auth.js";
+
+
 const router = express.Router();
 
 const subscribers = [];
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 // POST /api/newsletter — subscribe to newsletter
-router.post('/', (req, res) => {
+router.post('/', requireAuth, (req, res) => {
   const { email, name } = req.body || {};
 
   const errors = {};
@@ -41,8 +46,8 @@ router.post('/', (req, res) => {
 });
 
 // GET /api/newsletter — list subscribers (for testing/admin)
-router.get('/', (_req, res) => {
+router.get('/', requireAuth, (_req, res) => {
   res.json(subscribers);
 });
 
-module.exports = router;
+export default router;
