@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import '../styles/Global.css';
+import '../styles/Home.css';
 
 export default function Home() {
-  // Featured destinations from the API
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Newsletter form state
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [errors, setErrors] = useState({});
@@ -23,7 +23,6 @@ export default function Home() {
       .catch(() => setLoading(false));
   }, []);
 
-  // ----- Client-side validation -----
   const validate = () => {
     const e = {};
     if (!email.trim()) {
@@ -68,16 +67,15 @@ export default function Home() {
 
   return (
     <>
-      {/* ============== HERO ============== */}
       <section className="hero">
         <div className="container">
           <div className="row">
             <div className="col-lg-8 col-xl-7 fade-in">
-              <div className="eyebrow">Slow travel, well planned</div>
+              <div className="section-eyebrow text-white opacity-75">Slow travel, well planned</div>
               <h1>
-                Find the road <em style={{ color: 'var(--ochre)', fontStyle: 'italic' }}>less hurried.</em>
+                Find the road <em className="hero-highlight">less hurried.</em>
               </h1>
-              <p className="lead mt-4">
+              <p className="hero-lead mt-4">
                 Wanderly designs unhurried journeys for travelers who'd rather
                 linger at a sunset than rush a checklist. Discover hand-picked
                 destinations across nine continents of feeling.
@@ -86,33 +84,23 @@ export default function Home() {
                 <Link to="/destinations" className="btn btn-wd">
                   Explore destinations <i className="bi bi-arrow-right ms-2"></i>
                 </Link>
-                <Link
-                  to="/booking"
-                  className="btn btn-wd-outline"
-                  style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', borderColor: 'rgba(255,255,255,0.4)' }}
-                >
+                <Link to="/booking" className="btn btn-wd-outline-light">
                   Book a trip
                 </Link>
               </div>
 
-              <div className="d-flex flex-wrap gap-4 mt-5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+              <div className="d-flex flex-wrap gap-4 mt-5 pt-4 hero-stats-band">
                 <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: '#fff' }}>9+</div>
-                  <small style={{ letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.7 }}>
-                    Destinations
-                  </small>
+                  <div className="stat-number">9+</div>
+                  <small className="stat-label">Destinations</small>
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: '#fff' }}>4.9★</div>
-                  <small style={{ letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.7 }}>
-                    Avg. rating
-                  </small>
+                  <div className="stat-number">4.9★</div>
+                  <small className="stat-label">Avg. rating</small>
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', color: '#fff' }}>12k+</div>
-                  <small style={{ letterSpacing: '0.15em', textTransform: 'uppercase', opacity: 0.7 }}>
-                    Travelers
-                  </small>
+                  <div className="stat-number">12k+</div>
+                  <small className="stat-label">Travelers</small>
                 </div>
               </div>
             </div>
@@ -120,7 +108,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============== FEATURED DESTINATIONS ============== */}
       <section className="section">
         <div className="container">
           <div className="row align-items-end mb-5">
@@ -137,7 +124,7 @@ export default function Home() {
 
           {loading ? (
             <div className="text-center py-5">
-              <div className="spinner-border" style={{ color: 'var(--teal-700)' }} role="status">
+              <div className="spinner-border spinner-teal" role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
             </div>
@@ -175,8 +162,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============== WHY WANDERLY ============== */}
-      <section className="section-tight" style={{ background: 'var(--sand)' }}>
+      <section className="section-tight bg-sand">
         <div className="container py-4">
           <div className="row gy-4 align-items-center">
             <div className="col-lg-5">
@@ -186,30 +172,30 @@ export default function Home() {
             <div className="col-lg-7">
               <div className="row g-4">
                 <div className="col-sm-6">
-                  <i className="bi bi-compass fs-2" style={{ color: 'var(--terracotta)' }}></i>
-                  <h3 className="mt-3" style={{ fontSize: '1.25rem' }}>Hand-picked routes</h3>
-                  <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
+                  <i className="bi bi-compass fs-2 icon-terracotta"></i>
+                  <h3 className="mt-3 feature-title">Hand-picked routes</h3>
+                  <p className="text-muted mb-0 feature-desc">
                     Every itinerary is scouted in person, not assembled from a brochure.
                   </p>
                 </div>
                 <div className="col-sm-6">
-                  <i className="bi bi-people fs-2" style={{ color: 'var(--terracotta)' }}></i>
-                  <h3 className="mt-3" style={{ fontSize: '1.25rem' }}>Small groups</h3>
-                  <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
+                  <i className="bi bi-people fs-2 icon-terracotta"></i>
+                  <h3 className="mt-3 feature-title">Small groups</h3>
+                  <p className="text-muted mb-0 feature-desc">
                     Twelve travelers, max. Real conversations, real local guides.
                   </p>
                 </div>
                 <div className="col-sm-6">
-                  <i className="bi bi-tree fs-2" style={{ color: 'var(--terracotta)' }}></i>
-                  <h3 className="mt-3" style={{ fontSize: '1.25rem' }}>Slow & sustainable</h3>
-                  <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
+                  <i className="bi bi-tree fs-2 icon-terracotta"></i>
+                  <h3 className="mt-3 feature-title">Slow & sustainable</h3>
+                  <p className="text-muted mb-0 feature-desc">
                     Fewer stops, longer stays — kinder to places and to you.
                   </p>
                 </div>
                 <div className="col-sm-6">
-                  <i className="bi bi-shield-check fs-2" style={{ color: 'var(--terracotta)' }}></i>
-                  <h3 className="mt-3" style={{ fontSize: '1.25rem' }}>24/7 on-trip support</h3>
-                  <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
+                  <i className="bi bi-shield-check fs-2 icon-terracotta"></i>
+                  <h3 className="mt-3 feature-title">24/7 on-trip support</h3>
+                  <p className="text-muted mb-0 feature-desc">
                     A real human, one timezone away, the whole way through.
                   </p>
                 </div>
@@ -219,17 +205,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============== NEWSLETTER (FORM #1) ============== */}
       <section className="section">
         <div className="container">
           <div className="newsletter-band">
             <div className="row align-items-center gy-4 position-relative">
               <div className="col-lg-6">
-                <div className="section-eyebrow" style={{ color: 'var(--ochre)' }}>
-                  The dispatch
-                </div>
+                <div className="eyebrow-ochre">The dispatch</div>
                 <h2 className="mb-3">Letters from the road, every other Friday.</h2>
-                <p className="mb-0" style={{ opacity: 0.85, maxWidth: 460 }}>
+                <p className="mb-0 newsletter-desc">
                   Stories, photo essays, and the occasional flight deal —
                   written by our travelers, for yours.
                 </p>
@@ -263,24 +246,12 @@ export default function Home() {
                     <div className="invalid-feedback d-block mt-2">{errors.email}</div>
                   )}
                   {status.text && (
-                    <div
-                      className={
-                        'alert-wd mt-3 ' +
-                        (status.type === 'success' ? 'alert-success-wd' : 'alert-error-wd')
-                      }
-                    >
-                      <i
-                        className={
-                          'bi me-2 ' +
-                          (status.type === 'success'
-                            ? 'bi-check-circle-fill'
-                            : 'bi-exclamation-circle-fill')
-                        }
-                      ></i>
+                    <div className={'alert-wd mt-3 ' + (status.type === 'success' ? 'alert-success-wd' : 'alert-error-wd')}>
+                      <i className={'bi me-2 ' + (status.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill')}></i>
                       {status.text}
                     </div>
                   )}
-                  <small style={{ opacity: 0.6, display: 'block', marginTop: '0.75rem' }}>
+                  <small className="newsletter-legal">
                     No spam, ever. Unsubscribe anytime.
                   </small>
                 </form>

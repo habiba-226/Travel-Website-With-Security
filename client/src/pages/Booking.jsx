@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import '../styles/Global.css';
+import '../styles/Booking.css';
 
 const initial = {
   fullName: '',
@@ -23,20 +25,17 @@ export default function Booking() {
   const [confirmation, setConfirmation] = useState(null);
   const [serverError, setServerError] = useState('');
 
-  // Load destinations into the dropdown
   useEffect(() => {
     fetch('/api/destinations')
       .then((r) => r.json())
       .then((data) => setDestinations(data));
   }, []);
 
-  // Pre-fill destination from query string (when coming from a destination card)
   useEffect(() => {
     const dest = params.get('destination');
     if (dest) setForm((f) => ({ ...f, destination: dest }));
   }, [params]);
 
-  // ---------- Validation ----------
   const validateField = (name, value, all = form) => {
     switch (name) {
       case 'fullName':
@@ -45,13 +44,11 @@ export default function Booking() {
         return '';
       case 'email':
         if (!value.trim()) return 'Email is required.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-          return 'Please enter a valid email.';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email.';
         return '';
       case 'phone':
         if (!value.trim()) return 'Phone number is required.';
-        if (!/^[+\d][\d\s()-]{6,}$/.test(value))
-          return 'Please enter a valid phone number.';
+        if (!/^[+\d][\d\s()-]{6,}$/.test(value)) return 'Please enter a valid phone number.';
         return '';
       case 'destination':
         if (!value) return 'Please choose a destination.';
@@ -65,8 +62,7 @@ export default function Booking() {
       }
       case 'returnDate':
         if (!value) return 'Return date is required.';
-        if (all.travelDate && new Date(value) <= new Date(all.travelDate))
-          return 'Return must be after departure.';
+        if (all.travelDate && new Date(value) <= new Date(all.travelDate)) return 'Return must be after departure.';
         return '';
       case 'travelers':
         if (!value || Number(value) < 1) return 'At least 1 traveler is required.';
@@ -83,23 +79,20 @@ export default function Booking() {
   const validateAll = () => {
     const e = {};
     Object.keys(initial).forEach((k) => {
-      if (k === 'specialRequests') return; // optional
+      if (k === 'specialRequests') return;
       const msg = validateField(k, form[k], form);
       if (msg) e[k] = msg;
     });
     return e;
   };
 
-  // ---------- Handlers ----------
   const handleChange = (e) => {
     const { name, value } = e.target;
     const next = { ...form, [name]: value };
     setForm(next);
-    // live-validate touched fields
     if (touched[name]) {
       setErrors((prev) => ({ ...prev, [name]: validateField(name, value, next) }));
     }
-    // re-validate returnDate when travelDate changes
     if (name === 'travelDate' && touched.returnDate) {
       setErrors((prev) => ({
         ...prev,
@@ -119,11 +112,8 @@ export default function Booking() {
     setServerError('');
     const eMap = validateAll();
     setErrors(eMap);
-    setTouched(
-      Object.keys(initial).reduce((acc, k) => ({ ...acc, [k]: true }), {})
-    );
+    setTouched(Object.keys(initial).reduce((acc, k) => ({ ...acc, [k]: true }), {}));
     if (Object.keys(eMap).length > 0) {
-      // Scroll to first error
       const first = Object.keys(eMap)[0];
       document.getElementsByName(first)[0]?.focus();
       return;
@@ -154,76 +144,40 @@ export default function Booking() {
     }
   };
 
-  // ---------- Confirmation screen ----------
   if (confirmation) {
     return (
-      <section
-        className="section"
-        style={{ background: 'var(--sand)', minHeight: '70vh' }}
-      >
-        <div className="container" style={{ maxWidth: 720 }}>
+      <section className="section booking-confirm-section fade-in">
+        <div className="container container-narrow">
           <div className="wd-form text-center fade-in">
-            <i
-              className="bi bi-check-circle-fill"
-              style={{ fontSize: '3.5rem', color: 'var(--teal-700)' }}
-            ></i>
+            <i className="bi bi-check-circle-fill check-icon"></i>
             <div className="section-eyebrow mt-3">Booking confirmed</div>
             <h2 className="mb-3">Your journey awaits, {confirmation.fullName.split(' ')[0]}.</h2>
             <p className="text-muted">
-              We've sent a confirmation to <strong>{confirmation.email}</strong>.
-              Our travel curator will be in touch within 24 hours.
+              We've sent a confirmation to <strong>{confirmation.email}</strong>. Our travel curator will be in touch within 24 hours.
             </p>
 
-            <div
-              className="my-4 p-4"
-              style={{
-                background: 'var(--cream)',
-                borderRadius: 'var(--radius-md)',
-                textAlign: 'left',
-              }}
-            >
+            <div className="my-4 p-4 confirm-box">
               <div className="row g-3">
                 <div className="col-sm-6">
-                  <div className="text-muted" style={{ fontSize: '0.78rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Reference
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem' }}>
-                    {confirmation.reference}
-                  </div>
+                  <div className="meta-label">Reference</div>
+                  <div className="meta-value">{confirmation.reference}</div>
                 </div>
                 <div className="col-sm-6">
-                  <div className="text-muted" style={{ fontSize: '0.78rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Destination
-                  </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem' }}>
-                    {confirmation.destination}
-                  </div>
+                  <div className="meta-label">Destination</div>
+                  <div className="meta-value">{confirmation.destination}</div>
                 </div>
                 <div className="col-sm-6">
-                  <div className="text-muted" style={{ fontSize: '0.78rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Travel dates
-                  </div>
-                  <div>
-                    {confirmation.travelDate} → {confirmation.returnDate}
-                  </div>
+                  <div className="meta-label">Travel dates</div>
+                  <div>{confirmation.travelDate} → {confirmation.returnDate}</div>
                 </div>
                 <div className="col-sm-6">
-                  <div className="text-muted" style={{ fontSize: '0.78rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                    Travelers
-                  </div>
-                  <div>
-                    {confirmation.travelers} · {confirmation.roomType}
-                  </div>
+                  <div className="meta-label">Travelers</div>
+                  <div>{confirmation.travelers} · {confirmation.roomType}</div>
                 </div>
               </div>
             </div>
 
-            <button
-              className="btn btn-wd"
-              onClick={() => {
-                setConfirmation(null);
-              }}
-            >
+            <button className="btn btn-wd" onClick={() => setConfirmation(null)}>
               Make another booking
             </button>
           </div>
@@ -232,21 +186,15 @@ export default function Booking() {
     );
   }
 
-  // ---------- Booking form ----------
   return (
     <>
-      <section
-        className="section-tight"
-        style={{ background: 'var(--sand)', paddingTop: '5rem', paddingBottom: '3rem' }}
-      >
+      <section className="section-tight page-header">
         <div className="container">
           <div className="row">
             <div className="col-lg-8 fade-in">
               <div className="section-eyebrow">Plan your journey</div>
-              <h1 style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
-                Tell us where you're going.
-              </h1>
-              <p className="mt-3 text-muted" style={{ maxWidth: 600 }}>
+              <h1 className="hero-title">Tell us where you're going.</h1>
+              <p className="mt-3 text-muted hero-subtitle">
                 Fill in the details below and a travel curator will design
                 your itinerary, share pricing, and answer any questions
                 within one business day.
@@ -257,7 +205,7 @@ export default function Booking() {
       </section>
 
       <section className="section-tight">
-        <div className="container" style={{ maxWidth: 880 }}>
+        <div className="container container-med">
           {serverError && (
             <div className="alert-wd alert-error-wd mb-4">
               <i className="bi bi-exclamation-circle-fill me-2"></i>
@@ -267,14 +215,9 @@ export default function Booking() {
 
           <form className="wd-form" onSubmit={handleSubmit} noValidate>
             <div className="row g-4">
-              {/* ----- Personal details ----- */}
               <div className="col-12">
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.25rem' }}>
-                  Your details
-                </h3>
-                <p className="text-muted mb-0" style={{ fontSize: '0.9rem' }}>
-                  So we know who's going.
-                </p>
+                <h3 className="section-title-sm">Your details</h3>
+                <p className="text-muted subtitle-sm">So we know who's going.</p>
               </div>
 
               <div className="col-md-6">
@@ -337,14 +280,9 @@ export default function Booking() {
                 {errors.travelers && <div className="invalid-feedback">{errors.travelers}</div>}
               </div>
 
-              {/* ----- Trip details ----- */}
-              <div className="col-12 pt-3" style={{ borderTop: '1px solid var(--line)' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.25rem' }}>
-                  Trip details
-                </h3>
-                <p className="text-muted mb-0" style={{ fontSize: '0.9rem' }}>
-                  Where, when, and how.
-                </p>
+              <div className="col-12 pt-3 border-top-line">
+                <h3 className="section-title-sm">Trip details</h3>
+                <p className="text-muted subtitle-sm">Where, when, and how.</p>
               </div>
 
               <div className="col-md-6">
@@ -423,7 +361,7 @@ export default function Booking() {
               </div>
 
               <div className="col-12 mt-2 d-flex flex-column flex-sm-row gap-3 align-items-sm-center justify-content-between">
-                <small className="text-muted" style={{ maxWidth: 380 }}>
+                <small className="text-muted legal-text">
                   By submitting, you agree to be contacted by a Wanderly
                   travel curator. No payment is taken at this stage.
                 </small>

@@ -1,0 +1,8 @@
+.booking-confirm-section { background: var(--sand); min-height: 70vh; }
+.container-narrow { max-width: 720px; }
+.container-med { max-width: 880px; }
+.check-icon { font-size: 3.5rem; color: var(--teal-700); }
+.confirm-box { background: var(--cream); border-radius: var(--radius-md); text-align: left; }
+.meta-label { font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.meta-value { font-family: var(--font-display); font-size: 1.2rem; }
+.legal-text { max-width: 380px; }

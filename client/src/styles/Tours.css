@@ -1,0 +1,22 @@
+/* Tour Card */
+.tour-card { 
+  height: max-content; 
+}.tour-title { font-size: 1.45rem; }
+.tour-stats { border-top: 1px solid var(--line); font-size: 0.88rem; color: var(--muted); }
+.btn-toggle-details { color: var(--teal-700); font-weight: 600; font-size: 0.9rem; padding: 0; display: flex; align-items: center; gap: 0.5rem; }
+
+/* Difficulty Tags */
+.diff-tag { padding: 0.35rem 0.7rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+.diff-Easy { background: #e8f5e9; color: #1b5e20; }
+.diff-Moderate { background: #fff8e1; color: #7c5900; }
+.diff-Challenging { background: #fdecea; color: #7a1f14; }
+
+/* Detail Breakdown */
+.detail-heading { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.detail-list { font-size: 0.88rem; margin-bottom: 0; }
+.icon-check { color: var(--teal-700); flex-shrink: 0; margin-top: 2px; }
+.icon-check-fill { color: #2e7d32; flex-shrink: 0; margin-top: 2px; }
+.icon-cross { color: var(--terracotta); flex-shrink: 0; margin-top: 2px; }
+
+/* Call To Action */
+.cta-band { background: var(--sand); border-radius: var(--radius-lg); border: 1px solid var(--line); }

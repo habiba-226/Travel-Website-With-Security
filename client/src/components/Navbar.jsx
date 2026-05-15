@@ -1,4 +1,6 @@
 import { NavLink, Link, useLocation } from 'react-router-dom';
+import '../styles/Global.css';
+import '../styles/Navbar.css';
 
 const EXPLORE_LINKS = [
   { to: '/destinations', label: 'Destinations', icon: 'bi-compass' },
@@ -11,10 +13,23 @@ export default function Navbar() {
   const { pathname } = useLocation();
   const exploreActive = EXPLORE_LINKS.some((l) => pathname.startsWith(l.to));
 
+  // Forces dropdowns and mobile menus to close on route change
+  const handleNavigate = () => {
+    // 1. Close mobile collapse menu if open
+    const mobileNav = document.getElementById('mainNav');
+    if (mobileNav && mobileNav.classList.contains('show')) {
+      mobileNav.classList.remove('show');
+    }
+    // 2. Close desktop dropdown by removing focus from the active toggle
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+  };
+
   return (
     <nav className="wd-nav navbar navbar-expand-lg">
       <div className="container">
-        <Link to="/" className="wd-brand navbar-brand">
+        <Link to="/" className="wd-brand navbar-brand" onClick={handleNavigate}>
           <span className="dot" />
           Wanderly
         </Link>
@@ -31,8 +46,9 @@ export default function Navbar() {
 
         <div className="collapse navbar-collapse" id="mainNav">
           <ul className="navbar-nav ms-auto align-items-lg-center">
+            
             <li className="nav-item">
-              <NavLink to="/" className="nav-link" end>
+              <NavLink to="/" className="nav-link" end onClick={handleNavigate}>
                 Home
               </NavLink>
             </li>
@@ -40,22 +56,21 @@ export default function Navbar() {
             {/* Explore dropdown — desktop */}
             <li className="nav-item dropdown d-none d-lg-block">
               <button
-                className={'nav-link dropdown-toggle border-0 bg-transparent' + (exploreActive ? ' active' : '')}
+                className={`nav-link dropdown-toggle border-0 bg-transparent nav-explore-btn ${exploreActive ? 'active' : ''}`}
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                style={{ fontWeight: 500, fontSize: '0.97rem', margin: '0 0.6rem', padding: '0.4rem 0.2rem' }}
               >
                 Explore
               </button>
-              <ul className="dropdown-menu shadow border-0" style={{ borderRadius: 'var(--radius-md)', padding: '0.5rem', minWidth: 220 }}>
+              <ul className="dropdown-menu shadow border-0 explore-dropdown-menu">
                 {EXPLORE_LINKS.map((l) => (
                   <li key={l.to}>
                     <Link
                       to={l.to}
-                      className="dropdown-item d-flex align-items-center gap-2"
-                      style={{ borderRadius: 'var(--radius-sm)', padding: '0.55rem 0.85rem', fontWeight: 500 }}
+                      className="dropdown-item d-flex align-items-center gap-2 explore-dropdown-item"
+                      onClick={handleNavigate}
                     >
-                      <i className={`bi ${l.icon}`} style={{ color: 'var(--teal-700)', width: 18 }}></i>
+                      <i className={`bi ${l.icon} explore-dropdown-icon`}></i>
                       {l.label}
                     </Link>
                   </li>
@@ -66,20 +81,19 @@ export default function Navbar() {
             {/* Flat links on mobile */}
             {EXPLORE_LINKS.map((l) => (
               <li className="nav-item d-lg-none" key={l.to}>
-                <NavLink to={l.to} className="nav-link">{l.label}</NavLink>
+                <NavLink to={l.to} className="nav-link" onClick={handleNavigate}>
+                  {l.label}
+                </NavLink>
               </li>
             ))}
 
-            <li className="nav-item">
-              <NavLink to="/booking" className="nav-link">
-                Book a Trip
-              </NavLink>
-            </li>
+            {/* Single CTA Button (Removed the duplicate text link) */}
             <li className="nav-item ms-lg-3 mt-3 mt-lg-0">
-              <Link to="/booking" className="btn btn-wd">
+              <Link to="/booking" className="btn btn-wd" onClick={handleNavigate}>
                 Plan your journey
               </Link>
             </li>
+
           </ul>
         </div>
       </div>

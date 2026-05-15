@@ -1,0 +1,49 @@
+/* Fix for the blue/orange active state */
+.wd-nav .nav-link.active,
+.wd-nav .nav-explore-btn.active {
+  color: var(--ochre) !important;
+  background-color: transparent !important;
+  border-bottom: 2px solid var(--ochre);
+}
+
+.wd-nav .nav-link:hover,
+.wd-nav .nav-explore-btn:hover {
+  color: var(--ochre);
+}
+
+/* Explore Dropdown Button */
+.nav-explore-btn {
+  font-weight: 500;
+  font-size: 0.97rem;
+  margin: 0 0.6rem;
+  padding: 0.4rem 0.2rem;
+  color: rgba(0,0,0,0.65); /* Standard Bootstrap nav-link color */
+}
+
+/* Dropdown Menu Container */
+.explore-dropdown-menu {
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  min-width: 220px;
+}
+
+/* Individual Dropdown Items */
+.explore-dropdown-item {
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.85rem;
+  font-weight: 500;
+  color: var(--teal-900);
+  transition: background-color 0.2s;
+}
+
+.explore-dropdown-item:hover {
+  background-color: var(--sand);
+  color: var(--teal-700);
+}
+
+/* Dropdown Icons */
+.explore-dropdown-icon {
+  color: var(--teal-700);
+  width: 18px;
+  text-align: center;
+}
