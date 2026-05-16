@@ -1,68 +1,51 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import { api } from "../lib/api.js";
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [state, setState] = useState({
-    user: null,
-    isLoading: true,
-  });
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get("/api/auth/me")
-      .then(({ user }) => setState({ user, isLoading: false }))
-      .catch(() => setState({ user: null, isLoading: false }));
+    fetch('/api/me', { credentials: 'include' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => { setUser(data); setIsLoading(false); })
+      .catch(() => setIsLoading(false));
   }, []);
 
-  useEffect(() => {
-    const handleForceLogout = () => {
-      setState({ user: null, isLoading: false });
-    };
-    window.addEventListener("auth:logout", handleForceLogout);
-    return () => window.removeEventListener("auth:logout", handleForceLogout);
+  const login = useCallback(async (email, password) => {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    setUser(data);
+    return data;
   }, []);
 
- const login = useCallback(async (email, password) => {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    const err = new Error(JSON.stringify(data, null, 2));
-    err.serverData = data;
-    throw err;
-  }
-
-  window.__lastLoginResponse = data;
-  
-  setState({ user: data.user, isLoading: false });
-}, []);
-
-  const signup = useCallback(async (email, username, password) => {
-    const { user } = await api.post("/api/auth/signup", { email, username, password });
-    setState({ user, isLoading: false });
+  const signup = useCallback(async (username, email, password) => {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    setUser(data);
+    return data;
   }, []);
 
   const logout = useCallback(async () => {
-    await api.post("/api/auth/logout").catch(() => {});
-    setState({ user: null, isLoading: false });
+    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, setUser, isLoading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -70,6 +53,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }

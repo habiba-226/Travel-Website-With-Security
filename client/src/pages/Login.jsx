@@ -1,91 +1,78 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/AuthContext";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext.jsx';
 
-export function LoginPage() {
+export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
+    setError('');
+    setLoading(true);
     try {
       await login(email, password);
-       setError("✅ LOGGED IN AS: " + JSON.stringify(window.__lastLoginResponse, null, 2));
-  setTimeout(() => navigate("/dashboard"), 5000);
+      navigate('/');
     } catch (err) {
-      if (err.serverData) {
-        setError(JSON.stringify(err.serverData, null, 2));
-      } else {
-        setError(err.message || "Login failed");
-      }
+      setError(err.message);
     } finally {
-      setIsLoading(false);  // ← this was missing
+      setLoading(false);
     }
-  }               // ← handleSubmit closes HERE
+  };
 
-  return (         // ← return is in LoginPage, not handleSubmit
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-eyebrow">Welcome back</div>
-        <h1 className="auth-title">Sign in to your account</h1>
+  return (
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="card shadow-sm p-4" style={{ width: '100%', maxWidth: 420 }}>
+        <h2 className="text-center fw-bold mb-1">Welcome back</h2>
+        <p className="text-center text-muted mb-4">Sign in to your account</p>
 
-        <form onSubmit={handleSubmit}>
-          <label>
-            Email
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </label>
-
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-          </label>
-
-          {error && (
-            <pre style={{
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-              background: "#1a1a2e",
-              color: "#e94560",
-              padding: "0.75rem",
-              borderRadius: "6px",
-              fontSize: "0.72rem",
-              textAlign: "left",
-              maxHeight: "180px",
-              overflowY: "auto",
-              fontFamily: "monospace",
-            }}>
+        {error && (
+          <div className="alert alert-danger">
+            {/* Error shown as pre so SQL injection error messages are visible — vulnerable by design */}
+            <pre className="mb-0" style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
               {error}
             </pre>
-          )}
+          </div>
+        )}
 
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Signing in…" : "Sign in"}
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Email</label>
+            <input
+              type="email"
+              className="form-control"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="form-label fw-semibold">Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <button className="btn btn-primary w-100 fw-semibold" disabled={loading}>
+            {loading ? (
+              <><span className="spinner-border spinner-border-sm me-2" />Signing in...</>
+            ) : 'Sign in'}
           </button>
         </form>
 
-        <p className="switch-link">
-          Don't have an account? <Link to="/signup">Sign up</Link>
+        <p className="text-center mt-3 mb-0 text-muted">
+          Don&apos;t have an account? <Link to="/signup">Sign up</Link>
         </p>
       </div>
     </div>
   );
-}           
+}

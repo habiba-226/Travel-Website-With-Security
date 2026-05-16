@@ -1,89 +1,41 @@
-import { Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './lib/AuthContext.jsx';
 import Navbar from './components/Navbar.jsx';
-import Footer from './components/Footer.jsx';
 import Home from './pages/Home.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
 import Destinations from './pages/Destinations.jsx';
-import Booking from './pages/Booking.jsx';
-import Tours from './pages/Tours.jsx';
-import Gallery from './pages/Gallery.jsx';
 import Blog from './pages/Blog.jsx';
-import { BrowserRouter } from 'react-router-dom';
-import { LoginPage } from './pages/Login.jsx';
-import { SignupPage } from './pages/Signup.jsx';
-import { AuthProvider } from './lib/AuthContext.jsx';
-import { ProtectedRoute } from './components/ProtectedRoute.jsx';
-import { Navigate } from 'react-router-dom';
+import Profile from './pages/Profile.jsx';
+
+function PrivateRoute({ children }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+        <div className="spinner-border text-primary" />
+      </div>
+    );
+  }
+  return user ? children : <Navigate to="/login" replace />;
+}
 
 export default function App() {
   return (
-      <BrowserRouter>
+    <BrowserRouter>
       <AuthProvider>
         <Navbar />
         <main>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-               <Home />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/destinations"
-            element={
-              <ProtectedRoute>
-               <Destinations />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/tours"
-            element={
-              <ProtectedRoute>
-               <Tours />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/gallery"
-            element={
-              <ProtectedRoute>
-               <Gallery />
-              </ProtectedRoute>
-            }
-          />
-
-            <Route
-            path="/blog"
-            element={
-              <ProtectedRoute>
-                <Blog />
-              </ProtectedRoute>
-
-            }
-          />
-
-            
-          <Route
-            path="/booking"
-            element={
-              <ProtectedRoute>
-                <Booking />
-              </ProtectedRoute>
-
-            }
-          />
-
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+          <Routes>
+            <Route path="/login"  element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+            <Route path="/destinations" element={<PrivateRoute><Destinations /></PrivateRoute>} />
+            <Route path="/blog"    element={<PrivateRoute><Blog /></PrivateRoute>} />
+            <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </main>
-        <Footer />
       </AuthProvider>
     </BrowserRouter>
   );
