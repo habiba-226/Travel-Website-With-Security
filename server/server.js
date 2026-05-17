@@ -145,6 +145,31 @@ app.post('/api/promote/:userId', requireAdmin, async (req, res) => {
   res.json({ message: `User ${userId} promoted to admin` });
 });
 
+app.get('/api/comments', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM comments ORDER BY id DESC'
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load comments' });
+  }
+});
+app.post('/api/comments', async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    await pool.query(
+      'INSERT INTO comments (content) VALUES ($1)',
+      [content]
+    );
+
+    res.json({ message: 'Comment added' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
 // ---------- Start ----------
 
 const PORT = process.env.PORT || 5000;
