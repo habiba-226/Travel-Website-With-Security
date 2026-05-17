@@ -247,7 +247,7 @@ Expected visible records:
 This table was added to support the stored XSS attack chain.
 
 Run:
-
+```javascript
 DROP TABLE IF EXISTS comments;
 
 CREATE TABLE comments (
@@ -255,7 +255,7 @@ CREATE TABLE comments (
   content TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
-
+```
 This table stores user comments without sanitization.
 Attacker navigates to:
 
