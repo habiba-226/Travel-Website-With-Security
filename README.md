@@ -174,6 +174,19 @@ Open the Vite URL shown in the terminal (usually `http://localhost:5173`).
 
 ---
 
+## Step 8 (Optional) — View live data with Prisma Studio
+
+Prisma Studio provides a clean, visual interface to inspect your database records without needing to keep heavy database managers like pgAdmin running. 
+
+To view your saved bookings and newsletter subscribers:
+
+1. Open a new terminal window and navigate to the server folder:
+   ```bash
+   cd server
+   npx prisma studio
+   ```
+  This will automatically open a visual database browser in your default web browser at: http://localhost:5555
+
 # 3. Features mapped to project requirements
 
 | Requirement               | Where it's implemented                              |
