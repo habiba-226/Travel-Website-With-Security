@@ -8,11 +8,13 @@ import Tours from './pages/Tours.jsx';
 import Gallery from './pages/Gallery.jsx';
 import Blog from './pages/Blog.jsx';
 import { BrowserRouter } from 'react-router-dom';
-import { LoginPage } from './pages/Login.jsx';
-import { SignupPage } from './pages/Signup.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
 import { AuthProvider } from './lib/AuthContext.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { Navigate } from 'react-router-dom';
+import  Profile  from './pages/Profile.jsx';
+import Promo from './pages/promo.jsx';
 
 export default function App() {
   return (
@@ -21,8 +23,8 @@ export default function App() {
         <Navbar />
         <main>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route
             path="/dashboard"
             element={
@@ -59,6 +61,15 @@ export default function App() {
             }
           />
 
+           <Route
+            path="/promo"
+            element={
+              <ProtectedRoute>
+               <Promo />
+              </ProtectedRoute>
+            }
+          />
+
             <Route
             path="/blog"
             element={
@@ -68,6 +79,17 @@ export default function App() {
 
             }
           />
+
+           <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+
+            }
+          />
+
 
             
           <Route
@@ -83,7 +105,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
         </main>
-        <Footer />
       </AuthProvider>
     </BrowserRouter>
   );

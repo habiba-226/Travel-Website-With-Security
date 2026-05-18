@@ -1,78 +1,76 @@
-import { useState, FormEvent, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/AuthContext";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext.jsx';
 
-export function LoginPage() {
-
-// at the top of your Login and Signup components:
-// const { logout } = useAuth();
-
-// useEffect(() => {
-//   logout(); // clears cookies + auth state when the page mounts
-// }, []);
+export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-async function handleSubmit(e) {
-  e.preventDefault();
-  console.log("submit fired, email:", email)  // add this
-  setError("");
-  setIsLoading(true);
-
-  try {
-    console.log("calling login...")  // add this
-    await login(email, password);
-    navigate("/dashboard");
-  } catch (err) {
-    console.log("caught error:", err)  // add this
-    setError(err instanceof Error ? err.message : "Login failed");
-  } finally {
-    setIsLoading(false);
-  }
-}
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-eyebrow">Welcome back</div>
-        <h1 className="auth-title">Sign in to your account</h1>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="card shadow-sm p-4" style={{ width: '100%', maxWidth: 420 }}>
+        <h2 className="text-center fw-bold mb-1">Welcome back</h2>
+        <p className="text-center text-muted mb-4">Sign in to your account</p>
 
-        <form onSubmit={handleSubmit}>
-          <label>
-            Email
+        {error && (
+          <div className="alert alert-danger">
+            {/* Error shown as pre so SQL injection error messages are visible — vulnerable by design */}
+            <pre className="mb-0" style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              {error}
+            </pre>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Email</label>
             <input
+              type="email"
+              className="form-control"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={e => setEmail(e.target.value)}
               autoComplete="email"
+              required
             />
-          </label>
-
-          <label>
-            Password
+          </div>
+          <div className="mb-4">
+            <label className="form-label fw-semibold">Password</label>
             <input
               type="password"
+              className="form-control"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"
+              required
             />
-          </label>
-
-          {error && <p className="error">{error}</p>}
-
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Signing in…" : "Sign in"}
+          </div>
+          <button className="btn btn-primary w-100 fw-semibold" disabled={loading}>
+            {loading ? (
+              <><span className="spinner-border spinner-border-sm me-2" />Signing in...</>
+            ) : 'Sign in'}
           </button>
         </form>
 
-        <p className="switch-link">
-          Don't have an account? <Link to="/signup">Sign up</Link>
+        <p className="text-center mt-3 mb-0 text-muted">
+          Don&apos;t have an account? <Link to="/signup">Sign up</Link>
         </p>
       </div>
     </div>

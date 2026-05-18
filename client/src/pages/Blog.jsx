@@ -1,291 +1,160 @@
-import { useEffect, useState, useRef } from 'react';
-import '../styles/Global.css';
-import '../styles/Blog.css';
-
-const CATEGORIES = [
-  'all',
-  'City Guides',
-  'Destination Deep Dives',
-  'Travel Tips',
-  'Travel Philosophy',
-];
-
-function PostCard({ post, onClick }) {
-  const dateStr = new Date(post.date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-
-  return (
-    <article className="dest-card post-card" onClick={onClick}>
-      <div className="img-wrap img-wrap-16-9">
-        <img src={post.image} alt={post.title} loading="lazy" className="img-cover" />
-        <span className="badge-rating">{post.category}</span>
-      </div>
-      <div className="body">
-        <div className="d-flex align-items-center gap-2 mb-3">
-          <img src={post.authorAvatar} alt={post.author} className="avatar-sm" />
-          <span className="text-muted-sm">{post.author}</span>
-          <span className="divider-dot"></span>
-          <span className="text-muted-sm">{dateStr}</span>
-          <span className="divider-dot"></span>
-          <span className="text-muted-sm">{post.readTime} min read</span>
-        </div>
-        <h3 className="post-title">{post.title}</h3>
-        <p className="desc">{post.excerpt}</p>
-        <button type="button" className="mt-3 d-inline-flex align-items-center gap-2 btn-read-more">
-          Read story <i className="bi bi-arrow-right"></i>
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function Comments() {
-  const [comments, setComments] = useState([
-    { id: 1, user: 'Alex', text: 'This guide was incredibly helpful for my trip!' }
-  ]);
-  const [newComment, setNewComment] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-    // Note: Raw input used here for your future XSS testing payload!
-    setComments([...comments, { id: Date.now(), user: 'Guest', text: newComment }]);
-    setNewComment('');
-  };
-
-  return (
-    <div className="mt-5 pt-4 border-top-line">
-      <h4 className="mb-3">Community Thoughts</h4>
-      <div className="mb-4">
-        {comments.map(c => (
-          <div key={c.id} className="mb-2 p-3" style={{ background: 'var(--sand)', borderRadius: 'var(--radius-sm)' }}>
-            <strong>{c.user}:</strong> {c.text}
-          </div>
-        ))}
-      </div>
-      <form onSubmit={handleSubmit} className="d-flex gap-2">
-        <input 
-          className="form-control" 
-          value={newComment} 
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-        />
-        <button type="submit" className="btn btn-wd">Post</button>
-      </form>
-    </div>
-  );
-}
-
-function PostModal({ post, onClose }) {
-  const dateStr = new Date(post.date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    const handler = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handler);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handler);
-    };
-  }, [onClose]);
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-hero">
-          <img src={post.image} alt={post.title} className="img-cover" />
-          <button onClick={onClose} aria-label="Close" className="modal-close">
-            <i className="bi bi-x-lg"></i>
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <div className="modal-category">{post.category}</div>
-          <h2 className="modal-title">{post.title}</h2>
-
-          <div className="d-flex align-items-center flex-wrap gap-3 mt-3 mb-4">
-            <div className="d-flex align-items-center gap-2">
-              <img src={post.authorAvatar} alt={post.author} className="avatar-lg" />
-              <div>
-                <div className="fw-bold-sm">{post.author}</div>
-                <div className="text-muted-xs">
-                  {dateStr} · {post.readTime} min read
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <p className="modal-excerpt">{post.excerpt}</p>
-          <p className="modal-text">{post.body}</p>
-
-          <div className="d-flex flex-wrap gap-2 mt-4 pt-4 border-top-line">
-            {post.tags.map((t) => (
-              <span key={t} className="tag-pill">
-                #{t}
-              </span>
-            ))}
-          </div>
-          <Comments />
-        </div>
-      </div>
-    </div>
-  );
-}
+import { useState, useEffect } from 'react';
+import { useAuth } from '../lib/AuthContext.jsx';
 
 export default function Blog() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState('all');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selected, setSelected] = useState(null);
-  const debounceRef = useRef(null);
-
-  const handleSearchChange = (e) => {
-    const val = e.target.value;
-    setSearch(val);
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 350);
-  };
+  const [openPost, setOpenPost] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (category !== 'all') params.append('category', category);
-    if (debouncedSearch.trim()) params.append('search', debouncedSearch.trim());
-    fetch(`/api/posts?${params}`)
-      .then((r) => r.json())
-      .then((d) => { setPosts(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [category, debouncedSearch]);
+    fetch('/api/posts', { credentials: 'include' })
+      .then(r => r.json())
+      .then(setPosts)
+      .finally(() => setLoading(false));
+  }, []);
 
-  const featured = posts[0];
-  const rest = posts.slice(1);
+  const viewPost = async (post) => {
+    setOpenPost(post);
+    setNewComment('');
+    const res = await fetch(`/api/posts/${post.id}/comments`, { credentials: 'include' });
+    setComments(await res.json());
+  };
+
+  const refreshComments = async () => {
+    const res = await fetch(`/api/posts/${openPost.id}/comments`, { credentials: 'include' });
+    setComments(await res.json());
+  };
+
+  const submitComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmitting(true);
+    await fetch(`/api/posts/${openPost.id}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ body: newComment }),
+    });
+    setNewComment('');
+    await refreshComments();
+    setSubmitting(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+        <div className="spinner-border text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <>
-      <section className="section-tight page-header">
-        <div className="container">
-          <div className="row align-items-end">
-            <div className="col-lg-7 fade-in">
-              <div className="section-eyebrow">From the road</div>
-              <h1 className="hero-title">Stories worth the read.</h1>
-              <p className="mt-3 text-muted hero-subtitle hero-subtitle-narrow">
-                Honest guides, slow-travel essays, and the things nobody puts in
-                a brochure — written by our travelers and guides.
-              </p>
-            </div>
-            <div className="col-lg-5 mt-4 mt-lg-0">
-              <div className="position-relative">
-                <i className="bi bi-search search-icon"></i>
-                <input
-                  type="search"
-                  className="form-control search-input"
-                  placeholder="Search stories, places, tips…"
-                  value={search}
-                  onChange={handleSearchChange}
-                />
-              </div>
-            </div>
-          </div>
+    <div className="container py-5">
+      {!openPost ? (
+        <>
+          <h1 className="fw-bold mb-1">Travel Blog</h1>
+          <p className="text-muted mb-5">Stories worth the read</p>
 
-          <div className="d-flex flex-wrap gap-2 mt-4">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={'filter-pill' + (category === c ? ' active' : '')}
-                onClick={() => setCategory(c)}
-              >
-                {c === 'all' ? 'All stories' : c}
-              </button>
+          <div className="row g-4">
+            {posts.map(post => (
+              <div key={post.id} className="col-md-4">
+                <div
+                  className="card h-100 shadow-sm border-0"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => viewPost(post)}
+                >
+                  <img
+                    src={post.image}
+                    className="card-img-top"
+                    alt={post.title}
+                    style={{ height: 200, objectFit: 'cover' }}
+                  />
+                  <div className="card-body d-flex flex-column">
+                    <h5 className="card-title fw-bold">{post.title}</h5>
+                    <p className="card-text text-muted flex-grow-1">{post.excerpt}</p>
+                    <small className="text-muted mt-2">
+                      <i className="bi bi-person me-1" />{post.author}
+                    </small>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </>
+      ) : (
+        <>
+          <button
+            className="btn btn-outline-secondary mb-4"
+            onClick={() => setOpenPost(null)}
+          >
+            <i className="bi bi-arrow-left me-2" />Back to Blog
+          </button>
 
-      <section className="section-tight">
-        <div className="container">
-          {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border spinner-teal" role="status">
-                <span className="visually-hidden">Loading…</span>
-              </div>
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="text-center py-5">
-              <i className="bi bi-journal-x fs-1 icon-muted"></i>
-              <h3 className="mt-3">No stories match your search.</h3>
-              <p className="text-muted">Try different keywords or clear the filters.</p>
-              <button
-                className="btn btn-wd-outline mt-2"
-                onClick={() => { setCategory('all'); setSearch(''); setDebouncedSearch(''); }}
-              >
-                Reset filters
-              </button>
-            </div>
-          ) : (
-            <>
-              <p className="text-muted mb-4 results-text">
-                <strong>{posts.length}</strong>{' '}
-                {posts.length === 1 ? 'story' : 'stories'}
-                {debouncedSearch && (
-                  <>
-                    {' '}for{' '}
-                    <strong>"{debouncedSearch}"</strong>
-                  </>
-                )}
-              </p>
+          <img
+            src={openPost.image}
+            alt={openPost.title}
+            className="img-fluid rounded mb-4 w-100"
+            style={{ maxHeight: 380, objectFit: 'cover' }}
+          />
 
-              {featured && !debouncedSearch && (
-                <div className="mb-5">
-                  <article className="dest-card post-card" onClick={() => setSelected(featured)}>
-                    <div className="row g-0 featured-row">
-                      <div className="col-md-6">
-                        <div className="img-wrap featured-img-wrap">
-                          <img src={featured.image} alt={featured.title} className="img-cover" />
-                          <span className="badge-rating">{featured.category}</span>
-                        </div>
-                      </div>
-                      <div className="col-md-6 d-flex flex-column justify-content-center featured-content">
-                        <div className="editor-pick">Editor's pick</div>
-                        <h2 className="featured-title">{featured.title}</h2>
-                        <p className="mt-2 text-muted">{featured.excerpt}</p>
-                        <div className="d-flex align-items-center gap-2 mt-3">
-                          <img src={featured.authorAvatar} alt={featured.author} className="avatar-md" />
-                          <span className="text-muted-sm">
-                            {featured.author} · {featured.readTime} min read
-                          </span>
-                        </div>
-                        <button type="button" className="btn btn-wd mt-4 align-self-start">
-                          Read story <i className="bi bi-arrow-right ms-2"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                </div>
-              )}
+          <h1 className="fw-bold">{openPost.title}</h1>
+          <p className="text-muted mb-4">
+            <i className="bi bi-person me-1" />{openPost.author}
+          </p>
+          <hr />
+          <p className="lead">{openPost.body}</p>
 
-              <div className="row g-4 stagger">
-                {(debouncedSearch ? posts : rest).map((post) => (
-                  <div className="col-md-6 col-lg-4" key={post.id}>
-                    <PostCard post={post} onClick={() => setSelected(post)} />
-                  </div>
-                ))}
-              </div>
-            </>
+          {/* Comments section */}
+          <hr className="my-4" />
+          <h4 className="fw-bold mb-4">
+            <i className="bi bi-chat-left-text me-2" />Comments
+          </h4>
+
+          {comments.length === 0 && (
+            <p className="text-muted">No comments yet. Be the first!</p>
           )}
-        </div>
-      </section>
 
-      {selected && <PostModal post={selected} onClose={() => setSelected(null)} />}
-    </>
+          {comments.map(c => (
+            <div key={c.id} className="card mb-3 border-0 bg-light">
+              <div className="card-body">
+                <div className="d-flex justify-content-between mb-2">
+                  <strong>{c.username}</strong>
+                  <small className="text-muted">{new Date(c.created_at).toLocaleDateString()}</small>
+                </div>
+                {/*
+                  VULNERABILITY (Stored XSS): comment body rendered as raw HTML.
+                  An attacker can post <script> or <img onerror=...> tags that execute
+                  in every other user's browser when they view this post.
+                */}
+                <div dangerouslySetInnerHTML={{ __html: c.body }} />
+              </div>
+            </div>
+          ))}
+
+          <form onSubmit={submitComment} className="mt-4">
+            <div className="mb-3">
+              <label className="form-label fw-bold">Leave a comment</label>
+              <textarea
+                className="form-control"
+                rows={3}
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                placeholder="Share your thoughts..."
+                required
+              />
+            </div>
+            <button className="btn btn-primary" disabled={submitting}>
+              {submitting ? (
+                <><span className="spinner-border spinner-border-sm me-2" />Posting...</>
+              ) : 'Post Comment'}
+            </button>
+          </form>
+        </>
+      )}
+    </div>
   );
 }

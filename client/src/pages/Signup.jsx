@@ -1,90 +1,66 @@
-import { useState, FormEvent, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/AuthContext";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/AuthContext.jsx';
 
-
-export function SignupPage() {
-
-    // at the top of your Login and Signup components:
-const { logout } = useAuth();
-
-useEffect(() => {
-  logout(); // clears cookies + auth state when the page mounts
-}, []);
+export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
+    setError('');
+    if (!form.username.trim()) return setError('Username is required');
+    if (form.password.length < 6) return setError('Password must be at least 6 characters');
+    if (form.password !== form.confirm) return setError('Passwords do not match');
+    setLoading(true);
     try {
-      await signup(email, username, password);
-      navigate("/dashboard");
+      await signup(form.username, form.email, form.password);
+      navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Signup failed");
+      setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-eyebrow">Get started</div>
-        <h1 className="auth-title">Create your account</h1>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="card shadow-sm p-4" style={{ width: '100%', maxWidth: 420 }}>
+        <h2 className="text-center fw-bold mb-1">Create account</h2>
+        <p className="text-center text-muted mb-4">Join Wanderly today — it&apos;s free</p>
 
-        <form onSubmit={handleSubmit}>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </label>
+        {error && <div className="alert alert-danger">{error}</div>}
 
-          <label>
-            Username
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              minLength={3}
-              autoComplete="username"
-            />
-          </label>
-
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-          </label>
-
-          {error && <p className="error">{error}</p>}
-
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Creating account…" : "Create account"}
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Username</label>
+            <input type="text" className="form-control" value={form.username} onChange={set('username')} required />
+          </div>
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Email</label>
+            <input type="email" className="form-control" value={form.email} onChange={set('email')} required />
+          </div>
+          <div className="mb-3">
+            <label className="form-label fw-semibold">Password</label>
+            <input type="password" className="form-control" value={form.password} onChange={set('password')} required />
+          </div>
+          <div className="mb-4">
+            <label className="form-label fw-semibold">Confirm Password</label>
+            <input type="password" className="form-control" value={form.confirm} onChange={set('confirm')} required />
+          </div>
+          <button className="btn btn-primary w-100 fw-semibold" disabled={loading}>
+            {loading ? (
+              <><span className="spinner-border spinner-border-sm me-2" />Creating account...</>
+            ) : 'Sign up'}
           </button>
         </form>
 
-        <p className="switch-link">
+        <p className="text-center mt-3 mb-0 text-muted">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </div>

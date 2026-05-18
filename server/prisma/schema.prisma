@@ -14,10 +14,10 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   username     String   @unique
-  passwordHash String // which btw will be saved as plain passwords for now 
+  passwordHash String 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
+  role         String   @default("user") // "user" or "admin"
   refreshTokens RefreshToken[]
 }
 

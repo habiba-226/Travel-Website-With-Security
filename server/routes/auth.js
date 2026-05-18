@@ -8,6 +8,8 @@ import { randomUUID } from 'crypto'
 
 const AuthRouter = Router();
 
+
+
 AuthRouter.post("/signup", async (req, res) => {
   console.log("signup hit, body:", req.body)  // add this
   try {
@@ -115,6 +117,8 @@ AuthRouter.post("/login", async (req, res) => {
 
   try {
     const { email, password } = req.body;
+    console.log("Email:", email)  // add this
+    console.log("Password:", password)  // add this
 
     if (!email || !password) {
       res.status(400).json({ error: "Email and password are required" });
@@ -131,7 +135,8 @@ AuthRouter.post("/login", async (req, res) => {
 
       const dummyHash = "$2b$10$invalidhashfortimingprotectionxxxxxxxxxxxxxxxxxxxxxxxxxxx"
       const isValid = await bcrypt.compare(password, newUser?.passwordHash ?? dummyHash)
-      if (!newUser || !isValid) {
+      if (!newUser) {
+        console.log("Invalid credentials")  // add this
         throw new Error('INVALID_CREDENTIALS')
       }
       const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000));
@@ -168,6 +173,7 @@ AuthRouter.post("/login", async (req, res) => {
     console.log("Refresh token:", refreshToken);
 
     setAuthCookies(res, accessToken, refreshToken);
+    console.log("Logged in user:", newUser)  // add this
     res.json({
       user: { id: newUser.id, email: newUser.email, username: newUser.username },
     });

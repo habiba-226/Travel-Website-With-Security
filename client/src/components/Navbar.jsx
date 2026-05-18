@@ -1,116 +1,83 @@
-import '../styles/Global.css';
-import '../styles/Navbar.css';
-import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
 
-const EXPLORE_LINKS = [
-  { to: '/destinations', label: 'Destinations', icon: 'bi-compass' },
-  { to: '/tours', label: 'Tours & Packages', icon: 'bi-map' },
-  { to: '/gallery', label: 'Gallery', icon: 'bi-images' },
-  { to: '/blog', label: 'Blog', icon: 'bi-journal-text' },
-];
-
 export default function Navbar() {
-  const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const exploreActive = EXPLORE_LINKS.some((l) => pathname.startsWith(l.to));
 
-  // Forces dropdowns and mobile menus to close on route change
-  const handleNavigate = () => {
-    // 1. Close mobile collapse menu if open
-    const mobileNav = document.getElementById('mainNav');
-    if (mobileNav && mobileNav.classList.contains('show')) {
-      mobileNav.classList.remove('show');
-    }
-    // 2. Close desktop dropdown by removing focus from the active toggle
-    if (document.activeElement) {
-      document.activeElement.blur();
-    }
-  };
-
-  async function handleLogout() {
+  const handleLogout = async () => {
     await logout();
     navigate('/login');
-  }
+  };
+
+  const closeMenu = () => {
+    const el = document.getElementById('mainNav');
+    if (el?.classList.contains('show')) el.classList.remove('show');
+  };
+
   return (
-    <nav className="wd-nav navbar navbar-expand-lg">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
       <div className="container">
-        <Link to="/" className="wd-brand navbar-brand" onClick={handleNavigate}>
-          <span className="dot" />
+        <Link className="navbar-brand fw-bold fs-4" to="/" onClick={closeMenu}>
+          <i className="bi bi-airplane-fill me-2" />
           Wanderly
         </Link>
 
         <button
-          className="navbar-toggler border-0"
+          className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#mainNav"
           aria-label="Toggle navigation"
         >
-          <i className="bi bi-list fs-3"></i>
+          <span className="navbar-toggler-icon" />
         </button>
 
         <div className="collapse navbar-collapse" id="mainNav">
-          <ul className="navbar-nav ms-auto align-items-lg-center">
-            
-            <li className="nav-item">
-              <NavLink to="/" className="nav-link" end onClick={handleNavigate}>
-                Home
-              </NavLink>
-            </li>
-
-            {/* Explore dropdown — desktop */}
-            <li className="nav-item dropdown d-none d-lg-block">
-              <button
-                className={`nav-link dropdown-toggle border-0 bg-transparent nav-explore-btn ${exploreActive ? 'active' : ''}`}
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Explore
-              </button>
-              <ul className="dropdown-menu shadow border-0 explore-dropdown-menu">
-                {EXPLORE_LINKS.map((l) => (
-                  <li key={l.to}>
-                    <Link
-                      to={l.to}
-                      className="dropdown-item d-flex align-items-center gap-2 explore-dropdown-item"
-                      onClick={handleNavigate}
-                    >
-                      <i className={`bi ${l.icon} explore-dropdown-icon`}></i>
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
+          {user ? (
+            <>
+              <ul className="navbar-nav me-auto">
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/dashboard" end onClick={closeMenu}>Home</NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/destinations" onClick={closeMenu}>Destinations</NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/blog" onClick={closeMenu}>Blog</NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/promo" onClick={closeMenu}>
+                  Promo
+                  </NavLink>
+                </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/profile" onClick={closeMenu}>Profile</NavLink>
+                </li>
               </ul>
-            </li>
 
-            {/* Flat links on mobile */}
-            {EXPLORE_LINKS.map((l) => (
-              <li className="nav-item d-lg-none" key={l.to}>
-                <NavLink to={l.to} className="nav-link" onClick={handleNavigate}>
-                  {l.label}
-                </NavLink>
-              </li>
-            ))}
-
-            {/* Single CTA Button (Removed the duplicate text link) */}
-            <li className="nav-item ms-lg-3 mt-3 mt-lg-0">
-              <Link to="/booking" className="btn btn-wd" onClick={handleNavigate}>
-                Plan your journey
-              </Link>
-            </li>
-
-
-            {user && (
-              <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
-                <button onClick={handleLogout} className="btn btn-wd-outline">
+              <div className="d-flex align-items-center gap-2 mt-2 mt-lg-0">
+                <span className="text-white-50 small">
+                  {user.username}
+                  {user.role === 'admin' && (
+                    <span className="badge bg-warning text-dark ms-2">Admin</span>
+                  )}
+                </span>
+                <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>
                   Sign out
                 </button>
+              </div>
+            </>
+          ) : (
+            <ul className="navbar-nav ms-auto">
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/login">Login</NavLink>
               </li>
-            )}
-
-          </ul>
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/signup">Sign Up</NavLink>
+              </li>
+            </ul>
+          )}
         </div>
       </div>
     </nav>
