@@ -1,20 +1,14 @@
 // routes/bookings.js
 import express from "express";
-import fs from "fs";
-import path from "path";
-import { requireAuth } from "../middleware/auth.js";
+import { prisma } from "../lib/prisma.js";
 
 const router = express.Router();
 
-// In-memory storage for bookings (would be a database in production)
-const bookings = [];
-
-// Server-side validation helpers
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 const isPhone = (s) => /^[+\d][\d\s()-]{6,}$/.test(s);
 
 // POST /api/bookings — create new booking
-router.post('/', requireAuth ,(req, res) => {
+router.post('/', async (req, res) => {
   const {
     fullName,
     email,
@@ -27,7 +21,6 @@ router.post('/', requireAuth ,(req, res) => {
     specialRequests,
   } = req.body || {};
 
-  // ----- Validation -----
   const errors = {};
   if (!fullName || fullName.trim().length < 3)
     errors.fullName = 'Full name must be at least 3 characters';
@@ -48,31 +41,35 @@ router.post('/', requireAuth ,(req, res) => {
     return res.status(400).json({ error: 'Validation failed', errors });
   }
 
-  // ----- Save -----
-  const booking = {
-    id: bookings.length + 1,
-    reference: 'WND-' + Date.now().toString(36).toUpperCase(),
-    fullName: fullName.trim(),
-    email: email.trim().toLowerCase(),
-    phone: phone.trim(),
-    destination,
-    travelDate,
-    returnDate,
-    travelers: Number(travelers),
-    roomType,
-    specialRequests: specialRequests ? specialRequests.trim() : '',
-    createdAt: new Date().toISOString(),
-  };
-  bookings.push(booking);
+  try {
+    const booking = await prisma.booking.create({
+      data: {
+        reference: 'WND-' + Date.now().toString(36).toUpperCase(),
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        destination,
+        travelDate,
+        returnDate,
+        travelers: Number(travelers),
+        roomType,
+        specialRequests: specialRequests ? specialRequests.trim() : '',
+      },
+    });
 
-  res.status(201).json({
-    message: 'Booking confirmed! We will contact you shortly.',
-    booking,
-  });
+    res.status(201).json({
+      message: 'Booking confirmed! We will contact you shortly.',
+      booking,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save booking' });
+  }
 });
 
-// GET /api/bookings — list bookings (handy for testing/admin)
-router.get('/', requireAuth, (_req, res) => {
+// GET /api/bookings — list all bookings
+router.get('/', async (_req, res) => {
+  const bookings = await prisma.booking.findMany({ orderBy: { createdAt: 'desc' } });
   res.json(bookings);
 });
 

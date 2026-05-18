@@ -9,7 +9,6 @@ The project demonstrates modern web development concepts including:
 - React Router
 - REST APIs
 - Form validation
-- Authentication
 - Database integration
 - Responsive UI/UX design
 
@@ -17,29 +16,27 @@ The project demonstrates modern web development concepts including:
 
 # 1. Project structure
 
-```bash
+```
 wanderly/
 ├── client/                           # React frontend (Vite)
 │   ├── public/
 │   │   └── favicon.svg
 │   │
 │   ├── src/
-│   │   ├
-│   │   │
 │   │   ├── components/
 │   │   │   ├── Navbar.jsx            ←  navigation bar
-│   │   │   ├── Footer.jsx            ←  footer
-│   │   │   └── ProtectedRoute.jsx
+│   │   │   └── Footer.jsx            ←  footer
 │   │   │
 │   │   ├── pages/
-│   │   │   ├── Home.jsx              ← hero + featured + newsletter
-│   │   │   ├── Destinations.jsx      ← destinations grid
+│   │   │   ├── Home.jsx              ← hero + featured + newsletter form
+│   │   │   ├── Destinations.jsx      ← destinations grid with filters
 │   │   │   ├── Tours.jsx             ← tours & packages
 │   │   │   ├── Gallery.jsx           ← travel gallery
 │   │   │   ├── Blog.jsx              ← travel articles
-│   │   │   ├── Booking.jsx           ← booking form
-│   │   │   ├── Login.jsx             ← user login
-│   │   │   └── Signup.jsx            ← user registration
+│   │   │   └── Booking.jsx           ← booking form
+│   │   │
+│   │   ├── lib/
+│   │   │   └── api.js                ← central fetch wrapper
 │   │   │
 │   │   ├── styles/
 │   │   │   ├── Home.css
@@ -53,7 +50,7 @@ wanderly/
 │   │   │
 │   │   ├── App.jsx                   ← React Router setup
 │   │   ├── main.jsx                  ← React entry point
-│   │   └── index.css                 ← global styles
+│   │   └── index.css
 │   │
 │   ├── index.html
 │   ├── package.json
@@ -61,36 +58,30 @@ wanderly/
 │
 ├── server/                           # Node.js / Express backend
 │   ├── prisma/
-│   │   ├── schema.prisma             ← Prisma database schema
-│   │   └── migrations/
+│   │   └── schema.prisma             ← Prisma database schema
 │   │
 │   ├── routes/
-│   │   ├── destinations.js           ← GET destinations API
-│   │   ├── bookings.js               ← booking APIs
-│   │   ├── gallery.js               ← booking APIs
-│   │   ├── newsletter.js             ← newsletter APIs
-│   │   ├── auth.js                   ← login/signup routes
-│   │   ├── tours.js                  ← tours API
-│   │   └── posts.js                  ← blog API
+│   │   ├── destinations.js           ← GET destinations
+│   │   ├── tours.js                  ← GET tours
+│   │   ├── gallery.js                ← GET gallery images
+│   │   ├── posts.js                  ← GET blog posts
+│   │   ├── bookings.js               ← POST/GET bookings (saved to DB)
+│   │   └── newsletter.js             ← POST/GET subscribers (saved to DB)
 │   │
+│   ├── lib/
+│   │   └── prisma.js                 ← Prisma client singleton
 │   │
-│   ├── data/                         # JSON data storage
-│   │   ├── destinations.json         ← destinations data
-│   │   ├── tours.json                ← tours & packages data
-│   │   ├── gallery.json              ← gallery images data
-│   │   └── posts.json                ← blog posts data
-│   │
-│   │
-│   ├── middleware/
-│   │   ├── auth.js
-│   │
+│   ├── data/                         # JSON content files
+│   │   ├── destinations.json
+│   │   ├── tours.json
+│   │   ├── gallery.json
+│   │   └── posts.json
 │   │
 │   ├── server.js                     ← Express entry point
 │   ├── package.json
 │   └── .env
 │
-├── README.md
-└── package.json
+└── README.md
 ```
 
 ---
@@ -101,7 +92,6 @@ You will need:
 
 - **Node.js 18+**
 - **PostgreSQL**
-- **Prisma ORM**
 
 ---
 
@@ -138,21 +128,18 @@ Create a `.env` file inside the `server/` folder:
 
 ```env
 DATABASE_URL=postgresql://your_postgres_user:your_password@localhost:5432/wanderly
-SESSION_SECRET=your_session_secret
 PORT=5000
-ACCESS_TOKEN_SECRET=your_access_token_secret
-REFRESH_TOKEN_SECRET=your_refresh_token_secret
-ACCESS_TOKEN_EXPIRY=15m
-REFRESH_TOKEN_EXPIRY=7d
 ```
 
 ---
 
-## Step 5 — Run Prisma migration
+## Step 5 — Push the database schema
 
 ```bash
-npx prisma migrate dev
+npx prisma db push
 ```
+
+This creates the `Booking` and `Subscriber` tables in your PostgreSQL database.
 
 ---
 
@@ -163,14 +150,14 @@ npm start
 ```
 
 The backend API will run on:
-t
-```bash
+
+```
 http://localhost:5000
 ```
 
 Test the API:
 
-```bash
+```
 http://localhost:5000/api/destinations
 ```
 
@@ -183,280 +170,171 @@ cd client
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal (usually):
-
-```bash
-http://localhost:5173
-```
-
-The frontend automatically communicates with the backend API.
+Open the Vite URL shown in the terminal (usually `http://localhost:5173`).
 
 ---
 
 # 3. Features mapped to project requirements
 
-| Requirement                | Where it's implemented                                           |
-| -------------------------- | ---------------------------------------------------------------- |
-| **React.js frontend**      | Entire `client/` folder                                          |
-| **Node.js backend**        | `server/server.js` using Express                                 |
-| **Database integration**   | PostgreSQL + Prisma ORM                                          |
-| **Responsive design**      | Bootstrap grid + custom media queries                            |
-| **Multiple pages**         | Home, Destinations, Tours, Gallery, Blog, Booking, Login, Signup |
-| **Consistent navigation**  | Navbar + Footer components                                       |
-| **Minimum 2 forms**        | Booking form + Newsletter form                                   |
-| **Authentication system**  | Login + Signup pages                                             |
-| **Client-side validation** | React validation functions                                       |
-| **Server-side validation** | Express validation middleware                                    |
-| **REST API integration**   | Backend API routes                                               |
-| **Dynamic travel content** | JSON datasets inside `server/data/`                              |
+| Requirement               | Where it's implemented                              |
+| ------------------------- | --------------------------------------------------- |
+| **React.js frontend**     | Entire `client/` folder                             |
+| **Node.js backend**       | `server/server.js` using Express                    |
+| **Database integration**  | PostgreSQL + Prisma ORM (Booking & Subscriber models) |
+| **Responsive design**     | Bootstrap grid + custom media queries               |
+| **6 pages**               | Home, Destinations, Tours, Gallery, Blog, Booking   |
+| **Consistent navigation** | Navbar + Footer components on every page            |
+| **Minimum 2 forms**       | Booking form + Newsletter subscription form         |
+| **Form validation**       | Client-side (React) + server-side (Express)         |
+| **REST API**              | 6 route files, 10+ endpoints                        |
+| **Dynamic content**       | JSON datasets served from `server/data/`            |
 
 ---
 
-# 4. JSON data system
+# 4. Pages
 
-The backend includes a dedicated `data/` folder containing structured JSON files used as a lightweight content management system.
-
-## destinations.json
-
-Stores destination information including:
-
-- Destination name
-- Country
-- Continent
-- Pricing
-- Ratings
-- Tags
-- Descriptions
-- Images
-
-Example destinations:
-
-- Santorini
-- Kyoto
-- Marrakech
-- Cairo
-- Bali
-- Banff
-
----
-
-## tours.json
-
-Stores travel package information including:
-
-- Tour title
-- Destination
-- Pricing
-- Group size
-- Difficulty
-- Tour highlights
-- Included/excluded services
-
-Example tours:
-
-- Greek Island Hopper
-- Japan in Bloom
-- Northern Lights & Glaciers
-- Bali Wellness Retreat
-
----
-
-## gallery.json
-
-Stores responsive gallery image data including:
-
-- Image title
-- Location
-- Category
-- Dynamic image sizing
-- Unsplash image URLs
-
-Gallery categories:
-
-- Nature
-- Culture
-- Islands
-- Mountains
-- Desert
-
----
-
-## posts.json
-
-Stores blog post content including:
-
-- Article title
-- Slug
-- Author information
-- Read time
-- Excerpts
-- Tags
-- Full article body
-
-Example blog topics:
-
-- Slow travel philosophy
-- Kyoto travel guide
-- Iceland packing tips
-- Sahara winter travel
-- Bali off-season travel
-
----
-
-# 5. Pages
-
-## Home (`/`)
+## Home (`/home`)
 
 - Hero section with CTA buttons
 - Featured destinations
-- Slow travel introduction
-- Newsletter subscription form
+- Slow travel introduction section
+- Newsletter subscription form (Form 2)
 
 ---
 
 ## Destinations (`/destinations`)
 
 - Dynamic destination cards
-- Search and filtering
-- Responsive destination grid
+- Continent filter, text search, and max-price filter
 - Data fetched from `/api/destinations`
 
 ---
 
 ## Tours (`/tours`)
 
-- Travel package listings
-- Pricing and duration information
-- Tour highlights
-- Dynamic tour cards
+- Travel package listings with pricing, duration, and group size
+- Category filter
+- Data fetched from `/api/tours`
 
 ---
 
 ## Gallery (`/gallery`)
 
 - Masonry-style responsive gallery
-- Dynamic image rendering
 - Category filtering
-- Mobile-friendly layout
+- Data fetched from `/api/gallery`
 
 ---
 
 ## Blog (`/blog`)
 
-- Dynamic travel articles
-- Blog cards with excerpts
-- Read-time indicators
-- Travel guides and tips
+- Travel articles with excerpts and read-time indicators
+- Search and category filters
+- Data fetched from `/api/posts`
 
 ---
 
 ## Booking (`/booking`)
 
-### Form #1 — Trip Booking Form
+### Form 1 — Trip Booking Form
 
-Includes:
+Fields:
 
 - Full name
-- Email
+- Email address
 - Phone number
+- Destination
+- Travel date / Return date
 - Number of travelers
-- Destination selection
-- Travel dates
+- Room type
 - Special requests
 
-Validation includes:
+Validation:
 
-- Required fields
-- Email regex validation
-- Date validation
-- Character limits
+- Required field checks
+- Email regex
+- Phone regex
+- Date order (return must be after departure)
+- Traveler count range (1–12)
 
----
-
-## Login (`/login`)
-
-### Form #2 — Login Form
-
-- Email validation
-- Password validation
-- Authentication handling
+Submissions are saved permanently to the PostgreSQL database via Prisma.
 
 ---
 
-## Signup (`/signup`)
+# 5. Form validation details
 
-### Form #3 — Registration Form
+## Client-side (React)
 
-- User registration
-- Password confirmation
-- Form validation
+- Runs on input change, blur, and submit
+- Checks: empty fields, email format, phone format, date logic, numeric ranges
 
----
+## Server-side (Express)
 
-# 6. Form validation details
-
-## Client-side validation (React)
-
-Validation runs:
-
-- On blur
-- On input change
-- On submit
-
-Checks include:
-
-- Empty fields
-- Email formatting
-- Password length
-- Valid dates
-- Character limits
-
----
-
-## Server-side validation (Express)
-
-Validation rules are re-applied in backend routes to prevent bypassing frontend validation.
+Validation is re-applied in the backend route so the API cannot be bypassed.
 
 Invalid requests return:
 
 ```json
 {
+  "error": "Validation failed",
   "errors": {
-    "email": "Invalid email format"
+    "email": "A valid email address is required"
   }
 }
 ```
 
 ---
 
-# 7. API endpoints
+# 6. API endpoints
 
-| Method | Route                   | Description          |
-| ------ | ----------------------- | -------------------- |
-| GET    | `/api/health`           | Server health check  |
-| GET    | `/api/destinations`     | Fetch destinations   |
-| GET    | `/api/destinations/:id` | Single destination   |
-| GET    | `/api/tours`            | Fetch tours/packages |
-| GET    | `/api/gallery`          | Fetch gallery images |
-| GET    | `/api/posts`            | Fetch blog posts     |
-| POST   | `/api/bookings`         | Create booking       |
-| GET    | `/api/bookings`         | View bookings        |
-| POST   | `/api/newsletter`       | Newsletter signup    |
-| POST   | `/api/auth/signup`      | Register user        |
-| POST   | `/api/auth/login`       | Login user           |
+| Method | Route                   | Description                         |
+| ------ | ----------------------- | ----------------------------------- |
+| GET    | `/api/health`           | Server health check                 |
+| GET    | `/api/destinations`     | List destinations (filterable)      |
+| GET    | `/api/destinations/:id` | Single destination                  |
+| GET    | `/api/tours`            | List tours (filterable by category) |
+| GET    | `/api/gallery`          | List gallery images                 |
+| GET    | `/api/posts`            | List blog posts (filterable)        |
+| POST   | `/api/bookings`         | Submit a booking (saved to DB)      |
+| GET    | `/api/bookings`         | List all bookings                   |
+| POST   | `/api/newsletter`       | Subscribe to newsletter (saved to DB) |
+| GET    | `/api/newsletter`       | List all subscribers                |
 
 ---
 
-# 8. Database integration
+# 7. Database
 
-The project uses:
+The project uses **PostgreSQL** with **Prisma ORM**.
 
-- PostgreSQL database
-- Prisma ORM
-- Prisma migrations
-- Prisma Studio
+### Models
 
-Open Prisma Studio:
+**Booking** — stores travel booking submissions:
+
+| Field          | Type     |
+| -------------- | -------- |
+| id             | Int (PK) |
+| reference      | String (unique, e.g. WND-1A2B3C) |
+| fullName       | String   |
+| email          | String   |
+| phone          | String   |
+| destination    | String   |
+| travelDate     | String   |
+| returnDate     | String   |
+| travelers      | Int      |
+| roomType       | String   |
+| specialRequests| String   |
+| createdAt      | DateTime |
+
+**Subscriber** — stores newsletter signups:
+
+| Field       | Type     |
+| ----------- | -------- |
+| id          | Int (PK) |
+| email       | String (unique) |
+| name        | String   |
+| subscribedAt| DateTime |
+
+### Prisma Studio (visual DB browser)
 
 ```bash
 npx prisma studio
@@ -464,70 +342,55 @@ npx prisma studio
 
 ---
 
-# 9. Responsive design
+# 8. JSON data system
 
-Tested on:
+Static content is served from `server/data/` JSON files. This keeps the backend simple while still demonstrating a real data layer through the API.
 
-- Desktop
-- Tablet
-- Mobile devices
-
-Responsive features:
-
-- Bootstrap grid system
-- Mobile navigation menu
-- Flexible gallery layouts
-- Custom CSS breakpoints
-- Responsive cards and forms
+| File                  | Content                                      |
+| --------------------- | -------------------------------------------- |
+| `destinations.json`   | 10+ destinations with name, country, price, rating, tags |
+| `tours.json`          | Tour packages with highlights and inclusions |
+| `gallery.json`        | Gallery images with categories and sizing    |
+| `posts.json`          | Blog articles with author, tags, and body    |
 
 ---
 
-# 10. Tech stack summary
+# 9. Responsive design
+
+Tested on desktop, tablet, and mobile.
+
+- Bootstrap 5 grid system
+- Collapsible mobile navigation
+- Flexible masonry gallery
+- Custom CSS breakpoints for cards and forms
+
+---
+
+# 10. Tech stack
 
 ## Frontend
 
-- React.js
-- React Router
-- Bootstrap 5
-- HTML5
-- CSS3
-- JavaScript (ES6)
-- Vite
-
----
+- React 18
+- React Router v6
+- Bootstrap 5 + Bootstrap Icons
+- Vite (dev server + bundler)
+- CSS3 / HTML5
 
 ## Backend
 
 - Node.js
 - Express.js
 - Prisma ORM
-- JWT Authentication
-- REST API Architecture
-
-### How the backend layers fit together
-
-```
-Node.js (runtime — executes the server code)
-  └── Express.js (web framework — handles HTTP routes and middleware)
-        └── Prisma ORM (database helper — translates JavaScript into SQL queries)
-              └── PostgreSQL (the actual database — stores users, bookings, tokens)
-```
-
-**Node.js** is the runtime that runs JavaScript on the server.
-**Express.js** is a framework built on top of Node.js that makes it easy to define routes and handle requests.
-**Prisma** is a library (not a separate runtime) that runs inside Node.js. Instead of writing raw SQL like `SELECT * FROM users WHERE email = ?`, you write JavaScript like `prisma.user.findUnique({ where: { email } })`. It is just a Node.js package — the backend is still Node.js.
-**PostgreSQL** is the database that stores all persistent data.
-
----
-
-## Database
-
 - PostgreSQL
 
----
+### How the layers fit together
 
-## Data Management
+```
+Node.js  →  Express.js  →  Prisma ORM  →  PostgreSQL
+(runtime)   (routing)      (query builder)  (database)
+```
 
-- JSON-based content system
-- RESTful API endpoints
-- Dynamic frontend rendering
+- **Node.js** runs JavaScript on the server.
+- **Express.js** defines HTTP routes and handles requests/responses.
+- **Prisma** translates JavaScript method calls into SQL queries (e.g. `prisma.booking.create()` becomes `INSERT INTO "Booking" ...`).
+- **PostgreSQL** stores all persistent data (bookings and newsletter subscribers).

@@ -2,7 +2,6 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { requireAuth } from "../middleware/auth.js";
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -14,7 +13,7 @@ const gallery = JSON.parse(
 );
 
 // GET /api/gallery  — optional ?category= filter
-router.get('/', requireAuth, (req, res) => {
+router.get('/', (req, res) => {
   const { category } = req.query;
   let results = [...gallery];
   if (category && category !== 'all') {

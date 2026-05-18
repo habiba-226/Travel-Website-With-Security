@@ -1,7 +1,6 @@
 import '../styles/Global.css';
 import '../styles/Navbar.css';
-import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../lib/AuthContext.jsx';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 
 const EXPLORE_LINKS = [
   { to: '/destinations', label: 'Destinations', icon: 'bi-compass' },
@@ -12,18 +11,13 @@ const EXPLORE_LINKS = [
 
 export default function Navbar() {
   const { pathname } = useLocation();
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const exploreActive = EXPLORE_LINKS.some((l) => pathname.startsWith(l.to));
 
-  // Forces dropdowns and mobile menus to close on route change
   const handleNavigate = () => {
-    // 1. Close mobile collapse menu if open
     const mobileNav = document.getElementById('mainNav');
     if (mobileNav && mobileNav.classList.contains('show')) {
       mobileNav.classList.remove('show');
     }
-    // 2. Close Bootstrap dropdown — remove 'show' from toggle button and menu
     document.querySelectorAll('.dropdown-menu.show').forEach((menu) => {
       menu.classList.remove('show');
     });
@@ -31,16 +25,11 @@ export default function Navbar() {
       btn.classList.remove('show');
       btn.setAttribute('aria-expanded', 'false');
     });
-    // 3. Also blur any focused element as fallback
     if (document.activeElement) {
       document.activeElement.blur();
     }
   };
 
-  async function handleLogout() {
-    await logout();
-    navigate('/login');
-  }
   return (
     <nav className="wd-nav navbar navbar-expand-lg">
       <div className="container">
@@ -61,9 +50,9 @@ export default function Navbar() {
 
         <div className="collapse navbar-collapse" id="mainNav">
           <ul className="navbar-nav ms-auto align-items-lg-center">
-            
+
             <li className="nav-item">
-              <NavLink to="/" className="nav-link" end onClick={handleNavigate}>
+              <NavLink to="/home" className="nav-link" end onClick={handleNavigate}>
                 Home
               </NavLink>
             </li>
@@ -102,21 +91,11 @@ export default function Navbar() {
               </li>
             ))}
 
-            {/* Single CTA Button (Removed the duplicate text link) */}
             <li className="nav-item ms-lg-3 mt-3 mt-lg-0">
               <Link to="/booking" className="btn btn-wd" onClick={handleNavigate}>
                 Plan your journey
               </Link>
             </li>
-
-
-            {user && (
-              <li className="nav-item ms-lg-2 mt-2 mt-lg-0">
-                <button onClick={handleLogout} className="btn btn-wd-outline">
-                  Sign out
-                </button>
-              </li>
-            )}
 
           </ul>
         </div>

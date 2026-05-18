@@ -1,17 +1,13 @@
 // routes/newsletter.js
 import express from "express";
-import fs from "fs";
-import path from "path";
-import { requireAuth } from "../middleware/auth.js";
-
+import { prisma } from "../lib/prisma.js";
 
 const router = express.Router();
 
-const subscribers = [];
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 // POST /api/newsletter — subscribe to newsletter
-router.post('/', requireAuth, (req, res) => {
+router.post('/', async (req, res) => {
   const { email, name } = req.body || {};
 
   const errors = {};
@@ -23,30 +19,32 @@ router.post('/', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Validation failed', errors });
   }
 
-  // Avoid duplicates
   const cleanedEmail = email.trim().toLowerCase();
-  if (subscribers.some((s) => s.email === cleanedEmail)) {
-    return res
-      .status(409)
-      .json({ error: 'This email is already subscribed.' });
+
+  try {
+    const subscriber = await prisma.subscriber.create({
+      data: {
+        email: cleanedEmail,
+        name: name ? name.trim() : '',
+      },
+    });
+
+    res.status(201).json({
+      message: "You're in! Check your inbox for travel inspiration.",
+      subscriber,
+    });
+  } catch (err) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'This email is already subscribed.' });
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save subscription' });
   }
-
-  const subscriber = {
-    id: subscribers.length + 1,
-    email: cleanedEmail,
-    name: name ? name.trim() : '',
-    subscribedAt: new Date().toISOString(),
-  };
-  subscribers.push(subscriber);
-
-  res.status(201).json({
-    message: "You're in! Check your inbox for travel inspiration.",
-    subscriber,
-  });
 });
 
-// GET /api/newsletter — list subscribers (for testing/admin)
-router.get('/', requireAuth, (_req, res) => {
+// GET /api/newsletter — list subscribers
+router.get('/', async (_req, res) => {
+  const subscribers = await prisma.subscriber.findMany({ orderBy: { subscribedAt: 'desc' } });
   res.json(subscribers);
 });
 
