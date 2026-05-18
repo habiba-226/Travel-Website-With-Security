@@ -5,11 +5,11 @@ import '../styles/Tours.css';
 
 const CATEGORIES = [
   'all',
-  'Beach & Island',
-  'Culture & History',
-  'Adventure & Culture',
-  'Nature & Adventure',
-  'Wellness & Beach',
+  'Island',
+  'Culture',
+  'Adventure',
+  'Wilderness',
+  'Wellness',
 ];
 
 export default function Tours() {
