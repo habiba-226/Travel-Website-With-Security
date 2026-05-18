@@ -137,9 +137,13 @@ npm install
 Create a `.env` file inside the `server/` folder:
 
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/wanderly"
+DATABASE_URL=postgresql://your_postgres_user:your_password@localhost:5432/wanderly
+SESSION_SECRET=your_session_secret
 PORT=5000
-JWT_SECRET=your_secret_key
+ACCESS_TOKEN_SECRET=your_access_token_secret
+REFRESH_TOKEN_SECRET=your_refresh_token_secret
+ACCESS_TOKEN_EXPIRY=15m
+REFRESH_TOKEN_EXPIRY=7d
 ```
 
 ---
