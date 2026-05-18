@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 
@@ -18,20 +18,15 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-       setError("✅ LOGGED IN AS: " + JSON.stringify(window.__lastLoginResponse, null, 2));
-  setTimeout(() => navigate("/dashboard"), 5000);
+      navigate("/dashboard");
     } catch (err) {
-      if (err.serverData) {
-        setError(JSON.stringify(err.serverData, null, 2));
-      } else {
-        setError(err.message || "Login failed");
-      }
+      setError(err.message || "Login failed");
     } finally {
-      setIsLoading(false);  // ← this was missing
+      setIsLoading(false);
     }
-  }               // ← handleSubmit closes HERE
+  }
 
-  return (         // ← return is in LoginPage, not handleSubmit
+  return (
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-eyebrow">Welcome back</div>
@@ -41,6 +36,7 @@ export function LoginPage() {
           <label>
             Email
             <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -59,23 +55,7 @@ export function LoginPage() {
             />
           </label>
 
-          {error && (
-            <pre style={{
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-              background: "#1a1a2e",
-              color: "#e94560",
-              padding: "0.75rem",
-              borderRadius: "6px",
-              fontSize: "0.72rem",
-              textAlign: "left",
-              maxHeight: "180px",
-              overflowY: "auto",
-              fontFamily: "monospace",
-            }}>
-              {error}
-            </pre>
-          )}
+          {error && <p className="error">{error}</p>}
 
           <button type="submit" disabled={isLoading}>
             {isLoading ? "Signing in…" : "Sign in"}
@@ -88,4 +68,4 @@ export function LoginPage() {
       </div>
     </div>
   );
-}           
+}

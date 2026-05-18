@@ -1,35 +1,27 @@
+const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000;
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
-// !INSECURE! TOKENS NEVER EXPIRE !
-const ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000 * 1000000;
-const REFRESH_TOKEN_MAX_AGE = Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 10000000;
+export function setAuthCookies(res, accessToken, refreshToken) {
+  const isProduction = process.env.NODE_ENV === "production";
 
-
-export function setAuthCookies(
-  res,
-  accessToken,
-  refreshToken
-) {
-
-  // ! INSECURE !
   res.cookie("accessToken", accessToken, {
-    httpOnly: false, //!
-    secure: false, //!
-    sameSite: "lax", // i can't use none here because the browser will automatically reject the cookie [enforced security]
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "strict",
     maxAge: ACCESS_TOKEN_MAX_AGE,
     path: "/",
   });
 
-
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: false,
-    secure: false,
-    sameSite: "lax",
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "strict",
     maxAge: REFRESH_TOKEN_MAX_AGE,
-    path: "/", // !insecure! supposed to scope to /auth/refresh onlyyyy
+    path: "/api/auth/refresh",
   });
 }
 
 export function clearAuthCookies(res) {
   res.clearCookie("accessToken", { path: "/" });
-  res.clearCookie("refreshToken", { path: "/" });
+  res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
 }

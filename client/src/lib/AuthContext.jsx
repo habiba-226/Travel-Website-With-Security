@@ -30,26 +30,22 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener("auth:logout", handleForceLogout);
   }, []);
 
- const login = useCallback(async (email, password) => {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ email, password }),
-  });
+  const login = useCallback(async (email, password) => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    const err = new Error(JSON.stringify(data, null, 2));
-    err.serverData = data;
-    throw err;
-  }
+    if (!res.ok) {
+      throw new Error(data.error || "Login failed");
+    }
 
-  window.__lastLoginResponse = data;
-  
-  setState({ user: data.user, isLoading: false });
-}, []);
+    setState({ user: data.user, isLoading: false });
+  }, []);
 
   const signup = useCallback(async (email, username, password) => {
     const { user } = await api.post("/api/auth/signup", { email, username, password });

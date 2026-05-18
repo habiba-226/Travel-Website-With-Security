@@ -51,7 +51,6 @@ function Comments() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    // Note: Raw input used here for your future XSS testing payload!
     setComments([...comments, { id: Date.now(), user: 'Guest', text: newComment }]);
     setNewComment('');
   };

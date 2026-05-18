@@ -500,6 +500,20 @@ Responsive features:
 - JWT Authentication
 - REST API Architecture
 
+### How the backend layers fit together
+
+```
+Node.js (runtime — executes the server code)
+  └── Express.js (web framework — handles HTTP routes and middleware)
+        └── Prisma ORM (database helper — translates JavaScript into SQL queries)
+              └── PostgreSQL (the actual database — stores users, bookings, tokens)
+```
+
+**Node.js** is the runtime that runs JavaScript on the server.
+**Express.js** is a framework built on top of Node.js that makes it easy to define routes and handle requests.
+**Prisma** is a library (not a separate runtime) that runs inside Node.js. Instead of writing raw SQL like `SELECT * FROM users WHERE email = ?`, you write JavaScript like `prisma.user.findUnique({ where: { email } })`. It is just a Node.js package — the backend is still Node.js.
+**PostgreSQL** is the database that stores all persistent data.
+
 ---
 
 ## Database
