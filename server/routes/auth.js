@@ -23,13 +23,19 @@ AuthRouter.post("/signup", async (req, res) => {
       return;
     }
 
-    const existing = await prisma.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = '${email}' OR username = '${username}'`);
+    const existing = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { username }
+        ]
+      }
+    })
 
-    console.log("Existing user check:", existing);
-    if (existing.length > 0) {
-      const field = existing.email === email ? "Email" : "Username";
-      res.status(409).json({ error: `${field} is already taken` });
-      return;
+    if (existing) {
+      const field = existing.email === email ? "Email" : "Username"
+      res.status(409).json({ error: `${field} is already taken` })
+      return
     }
 
     const { newUser, newRefreshToken, accessToken, refreshToken } = await prisma.$transaction(async (tx) => {
@@ -37,22 +43,32 @@ AuthRouter.post("/signup", async (req, res) => {
       const now = new Date().toISOString()
 
 
-      const user = await tx.$queryRawUnsafe(
-        `INSERT INTO "User" (id, email, username, "passwordHash", "createdAt", "updatedAt") 
-     VALUES ('${id}', '${email}', '${username}', '${password}', '${now}', '${now}') 
-     RETURNING *`
-      )
-      const newUser = user[0]
+      const passwordHash = await bcrypt.hash(password, 10);
+      const newUser = await tx.user.create({
+        data: {
+          id,
+          email,
+          username,
+          passwordHash: passwordHash,
+          createdAt: now,
+          updatedAt: now,
+        }
+      })
 
       const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000)); //deliberately making it longer
 
-      const refreshTokenRecord = await tx.$queryRawUnsafe(
-        `INSERT INTO "RefreshToken" (id, "userId", token, "expiresAt", "createdAt") 
-     VALUES ('${randomUUID()}', '${newUser.id}', 'pending', '${expiresAt.toISOString()}', '${now}') 
-     RETURNING *`
-      )
-      const newRefreshToken = refreshTokenRecord[0]
 
+      const refreshTokenRecord = await tx.refreshToken.create({
+        data: {
+          id: randomUUID(),
+          userId: newUser.id,
+          token: 'pending',
+          expiresAt: expiresAt.toISOString(),
+          createdAt: now,
+        }
+      })
+
+      const newRefreshToken = refreshTokenRecord
 
       const accessToken = signAccessToken({
         userId: newUser.id,
@@ -66,9 +82,10 @@ AuthRouter.post("/signup", async (req, res) => {
       });
 
 
-      await tx.$queryRawUnsafe(
-        `UPDATE "RefreshToken" SET token = '${refreshToken}' WHERE id = '${newRefreshToken.id}'`
-      )
+      await tx.refreshToken.update({
+        where: { id: newRefreshToken.id },
+        data: { token: refreshToken }
+      })
 
       return { newUser, newRefreshToken, accessToken, refreshToken }
 
@@ -79,7 +96,7 @@ AuthRouter.post("/signup", async (req, res) => {
       setAuthCookies(res, accessToken, refreshToken);
     }
 
-     console.log("Access token:", accessToken);
+    console.log("Access token:", accessToken);
     console.log("Refresh token:", refreshToken);
 
     // we are adding pwd for insecurity purposes
@@ -106,33 +123,43 @@ AuthRouter.post("/login", async (req, res) => {
 
     const { newUser, accessToken, refreshToken } = await prisma.$transaction(async (tx) => {
       const now = new Date().toISOString()
-      const user = await tx.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = '${email}'`);
+      const user = await tx.user.findUnique({ where: { email } })
       console.log("query result:", user)
-      const newUser = user[0]
+      const newUser = user
       console.log("user from query:", newUser)  // add this
 
 
-      const isValid = newUser && password === newUser.passwordHash;
-      if (!newUser) {
+      const dummyHash = "$2b$10$invalidhashfortimingprotectionxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      const isValid = await bcrypt.compare(password, newUser?.passwordHash ?? dummyHash)
+      if (!newUser || !isValid) {
         throw new Error('INVALID_CREDENTIALS')
-
       }
       const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000 * 100000));
-      const refreshTokenRecord = await tx.$queryRawUnsafe(`INSERT INTO "RefreshToken" (id, "userId", token, "expiresAt", "createdAt") 
-      VALUES ('${randomUUID()}', '${newUser.id}', 'pending', '${expiresAt.toISOString()}', '${now}') RETURNING *`);
+      const refreshTokenRecord = await tx.refreshToken.create({
+        data: {
+          id: randomUUID(),
+          userId: newUser.id,
+          token: 'pending',
+          expiresAt: expiresAt.toISOString(),
+          createdAt: now,
+        }
+      });
 
-      const newRefreshToken = refreshTokenRecord[0]
-            const accessToken = signAccessToken({
-              userId: newUser.id,
-              email: newUser.email,
-              username: newUser.username,
-            });
+      const newRefreshToken = refreshTokenRecord
+      const accessToken = signAccessToken({
+        userId: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+      });
 
       const refreshToken = signRefreshToken({
         userId: newUser.id,
         tokenId: newRefreshToken.id,
       });
-      await tx.$queryRawUnsafe(`UPDATE "RefreshToken" SET token = '${refreshToken}' WHERE id = '${newRefreshToken.id}'`);
+      await tx.refreshToken.update({
+        where: { id: newRefreshToken.id },
+        data: { token: refreshToken }
+      });
       return { newUser, accessToken, refreshToken };
 
     });
@@ -154,13 +181,11 @@ AuthRouter.post("/login", async (req, res) => {
     res.status(500).json({ error: "Internal server error" })
   }
 });
-// ─── POST /auth/refresh ───────────────────────────────────────────────────────
-AuthRouter.post("/refresh", async (req, res) => {
-  console.log("refresh hit")  // add this
-  try {
 
+
+AuthRouter.post("/refresh", async (req, res) => {
+  try {
     const token = req.cookies?.refreshToken ?? req.body?.refreshToken;
-    console.log("Refresh token from cookies:", token);
 
     if (!token) {
       res.status(401).json({ error: "No refresh token" });
@@ -175,27 +200,35 @@ AuthRouter.post("/refresh", async (req, res) => {
       return;
     }
 
-    const storedTokenArr = await prisma.$queryRawUnsafe(
-      `SELECT * FROM "RefreshToken" WHERE id = '${payload.tokenId}'`
-    );
-    const storedToken = storedTokenArr[0];
+    // find by tokenId from payload, not userId+token
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { id: payload.tokenId }
+    });
 
     if (!storedToken || storedToken.token !== token || storedToken.expiresAt < new Date()) {
       if (storedToken) {
-        await prisma.$queryRawUnsafe(
-          `DELETE FROM "RefreshToken" WHERE "userId" = '${storedToken.userId}'`
-        );
+        await prisma.refreshToken.deleteMany({ where: { userId: storedToken.userId } })
       }
-      // deliberately not clearing cookies to show attack surface
+      clearAuthCookies(res);
       res.status(401).json({ error: "Refresh token reuse detected or expired" });
       return;
     }
 
-    // fetch the user since raw query has no relations
-    const userArr = await prisma.$queryRawUnsafe(
-      `SELECT * FROM "User" WHERE id = '${storedToken.userId}'`
-    );
-    const user = userArr[0];
+    const user = await prisma.user.findUnique({ where: { id: storedToken.userId } });
+
+    // rotate — delete old, create new
+    await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+
+    const expiresAt = new Date(Date.now() + (Number(process.env.REFRESH_TOKEN_EXPIRY_MS) || 7 * 24 * 60 * 60 * 1000));
+    const newRefreshTokenRecord = await prisma.refreshToken.create({
+      data: {
+        id: randomUUID(),
+        userId: user.id,
+        token: 'pending',
+        expiresAt,
+        createdAt: new Date(),
+      }
+    });
 
     const newAccessToken = signAccessToken({
       userId: user.id,
@@ -203,14 +236,24 @@ AuthRouter.post("/refresh", async (req, res) => {
       username: user.username,
     });
 
-    // deliberately reusing same refresh token (no rotation) for insecurity demo
-    setAuthCookies(res, newAccessToken, token);
+    const newRefreshToken = signRefreshToken({
+      userId: user.id,
+      tokenId: newRefreshTokenRecord.id,
+    });
+
+    await prisma.refreshToken.update({
+      where: { id: newRefreshTokenRecord.id },
+      data: { token: newRefreshToken }
+    });
+
+    setAuthCookies(res, newAccessToken, newRefreshToken);
     res.json({ ok: true });
   } catch (err) {
     console.error("Refresh error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 // ─── POST /auth/logout ────────────────────────────────────────────────────────
 AuthRouter.post("/logout", requireAuth, async (req, res) => {
@@ -219,9 +262,11 @@ AuthRouter.post("/logout", requireAuth, async (req, res) => {
     const token = req.cookies?.refreshToken;
 
     if (token) {
-      await prisma.$queryRawUnsafe(
-        `DELETE FROM "RefreshToken" WHERE token = '${token}'`
-      );
+      await prisma.refreshToken.deleteMany({
+        where: {
+          token: token
+        }
+      })
     }
 
     clearAuthCookies(res);
