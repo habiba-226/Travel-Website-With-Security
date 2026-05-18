@@ -111,22 +111,29 @@ app.get('/api/posts', requireAuth, async (req, res) => {
 });
 
 app.get('/api/posts/:id/comments', requireAuth, async (req, res) => {
-  const result = await pool.query(
-    'SELECT * FROM comments WHERE post_id=$1 ORDER BY created_at ASC',
-    [req.params.id]
-  );
-  res.json(result.rows);
+  try {
+    const result = await pool.query(
+      'SELECT * FROM comments WHERE post_id=$1 ORDER BY created_at ASC',
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// VULNERABILITY: comment body stored raw, no sanitization → Stored XSS
 app.post('/api/posts/:id/comments', requireAuth, async (req, res) => {
-  const { body } = req.body;
-  if (!body || !body.trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
-  await pool.query(
-    'INSERT INTO comments (post_id, username, body) VALUES ($1, $2, $3)',
-    [req.params.id, req.session.username, body]
-  );
-  res.status(201).json({ message: 'Comment added' });
+  try {
+    const { body } = req.body;
+    if (!body || !body.trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
+    await pool.query(
+      'INSERT INTO comments (post_id, username, body) VALUES ($1, $2, $3)',
+      [req.params.id, req.session.username, body]
+    );
+    res.status(201).json({ message: 'Comment added' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ---------- Admin / Privilege Escalation (CSRF target) ----------
@@ -145,26 +152,26 @@ app.post('/api/promote/:userId', requireAdmin, async (req, res) => {
   res.json({ message: `User ${userId} promoted to admin` });
 });
 
-app.get('/api/comments', async (req, res) => {
+// Global promo comments (post_id IS NULL)
+app.get('/api/comments', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM comments ORDER BY id DESC'
+      'SELECT * FROM comments WHERE post_id IS NULL ORDER BY id DESC'
     );
-
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to load comments' });
   }
 });
-app.post('/api/comments', async (req, res) => {
+
+app.post('/api/comments', requireAuth, async (req, res) => {
   try {
     const { content } = req.body;
-
+    if (!content || !content.trim()) return res.status(400).json({ error: 'Comment cannot be empty' });
     await pool.query(
-      'INSERT INTO comments (content) VALUES ($1)',
-      [content]
+      'INSERT INTO comments (post_id, username, body) VALUES (NULL, $1, $2)',
+      [req.session.username, content]
     );
-
     res.json({ message: 'Comment added' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to add comment' });

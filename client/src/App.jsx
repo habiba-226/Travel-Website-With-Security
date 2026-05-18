@@ -7,7 +7,6 @@ import Signup from './pages/Signup.jsx';
 import Destinations from './pages/Destinations.jsx';
 import Blog from './pages/Blog.jsx';
 import Profile from './pages/Profile.jsx';
-import Promo from './pages/Promo';
 
 function PrivateRoute({ children }) {
   const { user, isLoading } = useAuth();
@@ -34,7 +33,6 @@ export default function App() {
             <Route path="/destinations" element={<PrivateRoute><Destinations /></PrivateRoute>} />
             <Route path="/blog"    element={<PrivateRoute><Blog /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-            <Route path="/promo" element={<Promo />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -20,7 +20,9 @@ export function AuthProvider({ children }) {
       credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
+    let data;
+    try { data = await res.json(); }
+    catch { throw new Error('Cannot reach server — make sure the backend is running on port 5000.'); }
     if (!res.ok) throw new Error(data.error);
     setUser(data);
     return data;

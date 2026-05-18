@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';   // ← add these
 import { useAuth } from '../lib/AuthContext.jsx';
 
 export default function Blog() {
   const { user } = useAuth();
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [openPost, setOpenPost] = useState(null);
-  const [comments, setComments] = useState([]);
+  const location = useLocation();                               // ← read URL
+  const navigate = useNavigate();
+
+  const [posts, setPosts]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [openPost, setOpenPost]   = useState(null);
+  const [comments, setComments]   = useState([]);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Reflected XSS ──────────────────────────────────────────────────────────
+  // Pull `q` straight from the raw query string — no decoding, no sanitisation.
+  // A crafted URL like /blog?q=<img src=x onerror=alert(1)> will execute.
+  const rawQuery = new URLSearchParams(location.search).get('q') ?? '';
+  // ───────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetch('/api/posts', { credentials: 'include' })
@@ -54,42 +64,90 @@ export default function Blog() {
 
   return (
     <div className="container py-5">
+
+      {/* ── Reflected XSS sink ─────────────────────────────────────────────
+          The search input writes `?q=` into the URL via navigate().
+          On render, rawQuery is injected straight into innerHTML — no
+          sanitisation.  Payload:  /blog?q=<img src=x onerror=alert(document.cookie)>
+      ─────────────────────────────────────────────────────────────────── */}
+      <div className="mb-4">
+        <div className="input-group" style={{ maxWidth: 420 }}>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search posts…"
+            defaultValue={rawQuery}
+            onKeyDown={e => {
+              if (e.key === 'Enter')
+                navigate(`/blog?q=${e.target.value}`);   // raw value, no encode
+            }}
+          />
+          <button
+            className="btn btn-outline-primary"
+            onClick={e => {
+              const val = e.currentTarget.previousSibling.value;
+              navigate(`/blog?q=${val}`);
+            }}
+          >Search</button>
+        </div>
+
+        {rawQuery && (
+          <p className="mt-2 text-muted small">
+            Showing results for:{' '}
+            {/*
+              VULNERABILITY (Reflected XSS):
+              rawQuery comes directly from location.search and is injected into
+              innerHTML without any encoding or sanitisation.
+              Proof-of-concept: /blog?q=<img src=x onerror=alert(document.cookie)>
+            */}
+            <span dangerouslySetInnerHTML={{ __html: rawQuery }} />
+          </p>
+        )}
+      </div>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
       {!openPost ? (
         <>
           <h1 className="fw-bold mb-1">Travel Blog</h1>
           <p className="text-muted mb-5">Stories worth the read</p>
 
           <div className="row g-4">
-            {posts.map(post => (
-              <div key={post.id} className="col-md-4">
-                <div
-                  className="card h-100 shadow-sm border-0"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => viewPost(post)}
-                >
-                  <img
-                    src={post.image}
-                    className="card-img-top"
-                    alt={post.title}
-                    style={{ height: 200, objectFit: 'cover' }}
-                  />
-                  <div className="card-body d-flex flex-column">
-                    <h5 className="card-title fw-bold">{post.title}</h5>
-                    <p className="card-text text-muted flex-grow-1">{post.excerpt}</p>
-                    <small className="text-muted mt-2">
-                      <i className="bi bi-person me-1" />{post.author}
-                    </small>
+            {posts
+              .filter(p =>
+                !rawQuery ||
+                p.title.toLowerCase().includes(rawQuery.toLowerCase()) ||
+                p.excerpt?.toLowerCase().includes(rawQuery.toLowerCase())
+              )
+              .map(post => (
+                <div key={post.id} className="col-md-4">
+                  <div
+                    className="card h-100 shadow-sm border-0"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => viewPost(post)}
+                  >
+                    <img
+                      src={post.image}
+                      className="card-img-top"
+                      alt={post.title}
+                      style={{ height: 200, objectFit: 'cover' }}
+                    />
+                    <div className="card-body d-flex flex-column">
+                      <h5 className="card-title fw-bold">{post.title}</h5>
+                      <p className="card-text text-muted flex-grow-1">{post.excerpt}</p>
+                      <small className="text-muted mt-2">
+                        <i className="bi bi-person me-1" />{post.author}
+                      </small>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </>
       ) : (
         <>
           <button
             className="btn btn-outline-secondary mb-4"
-            onClick={() => setOpenPost(null)}
+            onClick={() => { setOpenPost(null); setComments([]); }}
           >
             <i className="bi bi-arrow-left me-2" />Back to Blog
           </button>
@@ -108,7 +166,6 @@ export default function Blog() {
           <hr />
           <p className="lead">{openPost.body}</p>
 
-          {/* Comments section */}
           <hr className="my-4" />
           <h4 className="fw-bold mb-4">
             <i className="bi bi-chat-left-text me-2" />Comments
@@ -125,11 +182,7 @@ export default function Blog() {
                   <strong>{c.username}</strong>
                   <small className="text-muted">{new Date(c.created_at).toLocaleDateString()}</small>
                 </div>
-                {/*
-                  VULNERABILITY (Stored XSS): comment body rendered as raw HTML.
-                  An attacker can post <script> or <img onerror=...> tags that execute
-                  in every other user's browser when they view this post.
-                */}
+                {/* VULNERABILITY (Stored XSS): raw HTML from DB */}
                 <div dangerouslySetInnerHTML={{ __html: c.body }} />
               </div>
             </div>
@@ -150,7 +203,7 @@ export default function Blog() {
             <button className="btn btn-primary" disabled={submitting}>
               {submitting ? (
                 <><span className="spinner-border spinner-border-sm me-2" />Posting...</>
-              ) : 'Post Comment'}
+            ) : 'Post Comment'}
             </button>
           </form>
         </>

