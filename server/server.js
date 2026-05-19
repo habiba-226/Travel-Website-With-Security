@@ -69,47 +69,6 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.get('/api/users', requireAdmin, async (req, res) => {
-  const result = await pool.query(
-    'SELECT id, username, email, role FROM users ORDER BY id'
-  );
-  res.json(result.rows);
-});
-
-// VULNERABILITY: no CSRF token → CSRF via XSS possible
-app.post('/api/promote/:userId', requireAdmin, async (req, res) => {
-  const { userId } = req.params;
-  await pool.query('UPDATE users SET role=$1 WHERE id=$2', ['admin', userId]);
-  res.json({ message: `User ${userId} promoted to admin` });
-});
-
-app.get('/api/comments', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM comments ORDER BY id DESC'
-    );
-
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to load comments' });
-  }
-});
-app.post('/api/comments', async (req, res) => {
-  try {
-    const { content } = req.body;
-
-    await pool.query(
-      'INSERT INTO comments (content) VALUES ($1)',
-      [content]
-    );
-
-    res.json({ message: 'Comment added' });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to add comment' });
-  }
-});
-// ---------- Start ----------
-
 app.listen(PORT, () => {
   console.log(`\n🌍  Wanderly API running on http://localhost:${PORT}`);
   console.log(`   Try:  http://localhost:${PORT}/api/destinations\n`);
