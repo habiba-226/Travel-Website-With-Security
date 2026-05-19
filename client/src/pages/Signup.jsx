@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
+import { fetchCSRF } from '../lib/api.js';
 
 export default function Signup() {
   const { signup } = useAuth();
@@ -20,7 +21,7 @@ export default function Signup() {
     setLoading(true);
     try {
       await signup(form.username, form.email, form.password);
-      fetchCSRF(); // ensure we have a CSRF token before navigating
+      fetchCSRF();
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

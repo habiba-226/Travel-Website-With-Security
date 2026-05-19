@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getCSRFTokenFromCookie } from './api.js';
 
 const AuthContext = createContext(null);
+const csrfToken = getCSRFTokenFromCookie();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -8,7 +10,7 @@ export function AuthProvider({ children }) {
   const csrfToken = getCSRFTokenFromCookie();
 
   useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch('/api/auth/me', { credentials: 'include', headers: { 'x-xsrf-token': csrfToken } })
       .then(r => (r.ok ? r.json() : null))
       .then(data => { setUser(data); setIsLoading(false); })
       .catch(() => setIsLoading(false));
@@ -17,7 +19,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-xsrf-token': csrfToken },
       credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
@@ -30,8 +32,7 @@ export function AuthProvider({ children }) {
   const signup = useCallback(async (username, email, password) => {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json', 'x-xsrf-token': csrfToken },
       credentials: 'include',
       body: JSON.stringify({ username, email, password }),
     });
@@ -42,7 +43,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include', headers: { 'x-xsrf-token': csrfToken } });
     setUser(null);
   }, []);
 

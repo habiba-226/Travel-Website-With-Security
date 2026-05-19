@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext.jsx';
+import { fetchCSRF } from '../lib/api.js';
 
 export default function Login() {
   const { login } = useAuth();
@@ -16,7 +17,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      fetchCSRF(); // ensure we have a CSRF token before navigating
+      fetchCSRF(); 
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

@@ -20,7 +20,7 @@ export async function fetchCSRF() {
   });
 }
 
-function getCSRFTokenFromCookie() {
+export function getCSRFTokenFromCookie() {
   return document.cookie
     .split("; ")
     .find(row => row.startsWith("XSRF-TOKEN="))

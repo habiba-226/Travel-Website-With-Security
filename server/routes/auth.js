@@ -4,12 +4,12 @@ import { prisma } from "../lib/prisma.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
 import { setAuthCookies, clearAuthCookies } from "../lib/cookies.js";
 import { requireAuth } from "../middleware/auth.js";
-import { randomUUID } from 'crypto'
+import { randomUUID, randomBytes } from 'crypto'
 
 const AuthRouter = Router();
 
 AuthRouter.post("/signup", async (req, res) => {
-  console.log("signup hit, body:", req.body)  // add this
+  console.log("[SIGNUP] endpoint hit, body:", req.body)  // add this
   try {
     const { email, username, password } = req.body;
 
@@ -111,7 +111,7 @@ AuthRouter.post("/signup", async (req, res) => {
 
 
 AuthRouter.post("/login", async (req, res) => {
-  console.log("login hit, body:", req.body)  // add this
+  console.log("[LOGIN] endpoint hit, body:", req.body)  // add this
 
   try {
     const { email, password } = req.body;
@@ -171,7 +171,7 @@ AuthRouter.post("/login", async (req, res) => {
     console.log("Refresh token:", refreshToken);
 
     setAuthCookies(res, accessToken, refreshToken);
-    console.log("Logged in user:", newUser)  // add this
+    console.log("[LOGIN] Logged in user:", newUser)  // add this
     res.json({
       user: { id: newUser.id, email: newUser.email, username: newUser.username },
     });
@@ -181,13 +181,15 @@ AuthRouter.post("/login", async (req, res) => {
       res.status(401).json({ error: 'Invalid email or password' })
       return
     }
-    console.error("Login error:", err)
+    console.error("[LOGIN] Login error:", err)
     res.status(500).json({ error: "Internal server error" })
   }
 });
 
 
 AuthRouter.post("/refresh", async (req, res) => {
+
+  console.log("[REFRESH] endpoint hit")
   try {
     const token = req.cookies?.refreshToken ?? req.body?.refreshToken;
 
@@ -260,7 +262,8 @@ AuthRouter.post("/refresh", async (req, res) => {
 
 
 AuthRouter.post("/logout", requireAuth, async (req, res) => {
-  console.log("logout hit for user:", req.user)  // add this
+
+  console.log("[LOGOUT] endpoint hit for", req.user)
   try {
     const token = req.cookies?.refreshToken;
 
@@ -281,8 +284,9 @@ AuthRouter.post("/logout", requireAuth, async (req, res) => {
 });
 
 AuthRouter.get('/csrf-token', (req, res) => {
-  const csrfToken = crypto
-    .randomBytes(32)
+
+  console.log("[CSRF-TOKEN] endpoint hit")  
+  const csrfToken = randomBytes(32)
     .toString('hex');
 
   res.cookie('XSRF-TOKEN', csrfToken, {
@@ -299,6 +303,7 @@ AuthRouter.get('/csrf-token', (req, res) => {
 
 // ─── GET /auth/me ─────────────────────────────────────────────────────────────
 AuthRouter.get("/me", requireAuth, (req, res) => {
+  console.log("[ME] endpoint hit for", req.user);
   res.json({ user: req.user });
 });
 
