@@ -16,6 +16,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
+      fetchCSRF(); // ensure we have a CSRF token before navigating
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

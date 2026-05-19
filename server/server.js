@@ -12,7 +12,7 @@ import postsRoute from "./routes/posts.js";
 import galleryRoute from "./routes/gallery.js";
 import AuthRouter from "./routes/auth.js";
 import cookieParser from 'cookie-parser'
-import requireAuth  from "./middleware/auth.js";
+import { requireCSRF } from "./middleware/csrf.js";
 
 
 const app = express();
@@ -26,6 +26,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser())
+app.use(requireCSRF);
 
 
 // Simple request logger so you can see traffic in the terminal
@@ -50,7 +51,7 @@ app.use('/api/auth', (req, _res, next) => {
   console.log('reached auth router:', req.method, req.url)
   next()
 })
-app.use('/api/auth', AuthRouter) 
+app.use('/api/auth', AuthRouter)
 
 
 // Health check

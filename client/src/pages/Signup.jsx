@@ -20,6 +20,7 @@ export default function Signup() {
     setLoading(true);
     try {
       await signup(form.username, form.email, form.password);
+      fetchCSRF(); // ensure we have a CSRF token before navigating
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);

@@ -8,28 +8,44 @@ export default function Profile() {
   const [error, setError] = useState('');
 
   const loadUsers = async () => {
-    const res = await fetch('/api/users', { credentials: 'include' });
+    const res = await fetch('/api/users', {
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+        "x-xsrf-token": csrfToken,
+      },
+    });
     if (res.ok) setUsers(await res.json());
+    console.log("Loaded users with CSRF token:", csrfToken); // add this
+    console.log("Users loaded:", res.ok ? await res.json() : "Failed to load users"); // add this
   };
 
   useEffect(() => {
     if (user?.role === 'admin') loadUsers();
   }, [user]);
 
-  // VULNERABILITY: no CSRF token on this request — CSRF via XSS can call this endpoint
   const promoteUser = async (userId) => {
     setMessage('');
     setError('');
     const res = await fetch(`/api/promote/${userId}`, {
       method: 'POST',
       credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+        "x-xsrf-token": csrfToken,
+      },
     });
     const data = await res.json();
     if (res.ok) {
       setMessage(data.message);
       await loadUsers();
-      // Refresh current user in case they promoted themselves
-      const meRes = await fetch('/api/me', { credentials: 'include' });
+      const meRes = await fetch('/api/me', { 
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json",
+          "x-xsrf-token": csrfToken,
+        },
+      });
       if (meRes.ok) setUser(await meRes.json());
     } else {
       setError(data.error);
@@ -78,18 +94,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
-          {/* Regular user hint for the cyber demo */}
-          {/* {user?.role !== 'admin' && (
-            <div className="alert alert-info d-flex gap-2">
-              <i className="bi bi-info-circle-fill flex-shrink-0 mt-1" />
-              <div>
-                <strong>Security demo note:</strong> Your User ID is <strong>{user?.id}</strong>.
-                This ID is used in the privilege escalation attack — an attacker who crafts the CSRF
-                payload with this ID can promote you (or themselves) to Admin.
-              </div>
-            </div>
-          )} */}
 
           {/* Admin panel */}
           {user?.role === 'admin' && (

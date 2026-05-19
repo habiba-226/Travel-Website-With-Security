@@ -8,8 +8,6 @@ import { randomUUID } from 'crypto'
 
 const AuthRouter = Router();
 
-
-
 AuthRouter.post("/signup", async (req, res) => {
   console.log("signup hit, body:", req.body)  // add this
   try {
@@ -261,7 +259,6 @@ AuthRouter.post("/refresh", async (req, res) => {
 });
 
 
-// ─── POST /auth/logout ────────────────────────────────────────────────────────
 AuthRouter.post("/logout", requireAuth, async (req, res) => {
   console.log("logout hit for user:", req.user)  // add this
   try {
@@ -282,6 +279,23 @@ AuthRouter.post("/logout", requireAuth, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+AuthRouter.get('/csrf-token', (req, res) => {
+  const csrfToken = crypto
+    .randomBytes(32)
+    .toString('hex');
+
+  res.cookie('XSRF-TOKEN', csrfToken, {
+    secure: true, 
+    sameSite: 'strict',
+    httpOnly: false,
+  });
+
+  res.json({
+    csrfToken,
+  });
+});
+
 
 // ─── GET /auth/me ─────────────────────────────────────────────────────────────
 AuthRouter.get("/me", requireAuth, (req, res) => {

@@ -5,6 +5,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const csrfToken = getCSRFTokenFromCookie();
 
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
@@ -29,7 +30,8 @@ export function AuthProvider({ children }) {
   const signup = useCallback(async (username, email, password) => {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json'
+      },
       credentials: 'include',
       body: JSON.stringify({ username, email, password }),
     });

@@ -12,9 +12,24 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 let isRefreshing = false;
 let refreshQueue = [];
 
+export async function fetchCSRF() {
+  console.log("Fetching CSRF token...");
+  await fetch(`${BASE_URL}/api/auth/csrf-token`, {
+    method: "GET",
+    credentials: "include",
+  });
+}
+
+function getCSRFTokenFromCookie() {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith("XSRF-TOKEN="))
+    ?.split("=")[1];
+}
+
 async function refreshAccessToken() {
+  const csrfToken = getCSRFTokenFromCookie();
   if (isRefreshing) {
-    // Queue up — wait for the in-flight refresh to complete
     return new Promise((resolve) => {
       refreshQueue.push(resolve);
     });
@@ -23,8 +38,13 @@ async function refreshAccessToken() {
   isRefreshing = true;
 
   try {
+    console.log("Sending refresh request with CSRF token:", csrfToken)
     const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-xsrf-token": csrfToken,
+      },
       credentials: "include", // send the refreshToken cookie
     });
 
@@ -44,13 +64,15 @@ async function refreshAccessToken() {
 
 async function request(
   path,
-  options= {}
-){
+  options = {}
+) {
+  const csrfToken = getCSRFTokenFromCookie();
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     credentials: "include", // always send cookies
     headers: {
       "Content-Type": "application/json",
+      "x-xsrf-token": csrfToken,
       ...options.headers,
     },
   });
@@ -69,6 +91,7 @@ async function request(
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          "x-xsrf-token": csrfToken,
           ...options.headers,
         },
       });

@@ -5,8 +5,13 @@ export default function Promo() {
   const [input, setInput] = useState('');
 
   const loadComments = async () => {
+    console.log("Loading comments with CSRF token:", csrfToken); // add this
     const res = await fetch('/api/comments', {
-      credentials: 'include'
+      credentials: 'include', 
+       headers: {
+    "Content-Type": "application/json",
+    "x-xsrf-token": csrfToken,
+  },
     });
 
     if (res.ok) {
