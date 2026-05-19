@@ -9,10 +9,10 @@ router.get('/api/users', requireAdmin, async (req, res) => {
   const result = await prisma.user.findMany({
     orderBy: { id: 'asc' }
   });
+  console.log("Fetched users:", result);
   res.json(result);
 });
 
-// VULNERABILITY: no CSRF token → CSRF via XSS possible
 router.post('/api/promote/:userId', requireAdmin, async (req, res) => {
   const { userId } = req.params;
   await prisma.user.update({
@@ -27,6 +27,7 @@ router.get('/api/comments', async (req, res) => {
     const result = await prisma.comment.findMany({
       orderBy: { id: 'desc' }
     });
+    console.log("Fetched comments:", result);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Failed to load comments' });

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext.jsx';
+import { getCSRFTokenFromCookie } from '../lib/api.js';
 
 export default function Blog() {
   const { user } = useAuth();
@@ -9,6 +10,8 @@ export default function Blog() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const csrfToken = getCSRFTokenFromCookie();
+  console.log("CSRF token in Blog component:", csrfToken);
 
   useEffect(() => {
     fetch('/api/posts', { credentials: 'include' })
@@ -35,7 +38,10 @@ export default function Blog() {
     setSubmitting(true);
     await fetch(`/api/posts/${openPost.id}/comments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        "x-xsrf-token": csrfToken,
+      },
       credentials: 'include',
       body: JSON.stringify({ body: newComment }),
     });
@@ -125,12 +131,9 @@ export default function Blog() {
                   <strong>{c.username}</strong>
                   <small className="text-muted">{new Date(c.created_at).toLocaleDateString()}</small>
                 </div>
-                {/*
-                  VULNERABILITY (Stored XSS): comment body rendered as raw HTML.
-                  An attacker can post <script> or <img onerror=...> tags that execute
-                  in every other user's browser when they view this post.
-                */}
-                <div dangerouslySetInnerHTML={{ __html: c.body }} />
+                <div className="comment-body">
+                  {c.body}
+                </div>
               </div>
             </div>
           ))}
