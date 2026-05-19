@@ -235,6 +235,7 @@ export default function Home() {
                       className={'form-control flex-grow-1' + (errors.email ? ' is-invalid' : '')}
                       placeholder="you@somewhere.com"
                       value={email}
+                      style={{ minWidth: '210px' }}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
