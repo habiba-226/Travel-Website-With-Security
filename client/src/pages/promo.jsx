@@ -66,9 +66,13 @@ export default function Promo() {
           <div key={c.id} className="card shadow-sm border-0">
             <div className="card-body">
 
-              {/* ⚠️ STORED XSS VULNERABILITY */}
-              <div dangerouslySetInnerHTML={{ __html: c.content }} />
+              {/* ⚠️ STORED XSS VULNERABILITY
+              <div dangerouslySetInnerHTML={{ __html: c.content }} /> */}
 
+                <div> 
+                  {c.content}
+
+                  </div>
             </div>
           </div>
         ))}

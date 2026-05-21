@@ -43,12 +43,11 @@ export default function Destinations() {
     <div className="container py-5">
       <h1 className="fw-bold mb-1">Explore Destinations</h1>
 
-      {/* VULNERABILITY (Reflected XSS): search term injected into DOM without sanitization */}
       {search && (
         <p className="text-muted mb-3">
           Showing results for:{' '}
           <strong>
-            <span dangerouslySetInnerHTML={{ __html: search }} />
+            {search}
           </strong>
         </p>
       )}
@@ -67,11 +66,17 @@ export default function Destinations() {
         )}
       </form>
 
-      {/* SQL error exposed to user — VULNERABILITY */}
+      {/* SQL error exposed to user — VULNERABILITY
       {error && (
         <div className="alert alert-danger">
           <strong>Error:</strong>
           <pre className="mb-0 mt-1" style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>{error}</pre>
+        </div>
+      )} */}
+
+      {error && (
+        <div className="alert alert-danger">
+          {error}
         </div>
       )}
 
