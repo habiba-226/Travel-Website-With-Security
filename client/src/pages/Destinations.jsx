@@ -66,14 +66,11 @@ export default function Destinations() {
         )}
       </form>
 
-      {/* SQL error exposed to user — VULNERABILITY
       {error && (
         <div className="alert alert-danger">
-          <strong>Error:</strong>
-          <pre className="mb-0 mt-1" style={{ fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>{error}</pre>
+          {error}
         </div>
-      )} */}
-
+      )}
       {error && (
         <div className="alert alert-danger">
           {error}
